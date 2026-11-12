@@ -158,11 +158,12 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 #attRow .filechip{display:inline-flex;align-items:center;gap:6px;padding-right:4px}
 #attRow .filechip button{width:24px;height:24px;border-radius:50%;color:var(--muted)}
 #input{display:block;width:100%;border:0;outline:0;background:none;resize:none;max-height:38vh;padding:4px 0;line-height:1.55}
-.cbar{display:flex;align-items:center;gap:6px;margin-top:4px}
+.cbar{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
 .cbar .icon{width:38px;height:38px;border:1px solid var(--line)}
 .pill{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);font-size:14px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
-#model{min-height:38px;border-radius:999px;border:1px solid var(--line);background:transparent;padding:0 10px;font-size:14px;max-width:44vw;min-width:0}
+#think{min-height:38px;border-radius:999px;border:1px solid var(--line);background:transparent;padding:0 8px;font-size:14px;flex:none}
+#model{min-height:38px;border-radius:999px;border:1px solid var(--line);background:transparent;padding:0 10px;font-size:14px;max-width:34vw;min-width:0}
 .grow{flex:1}
 #send{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;flex:none}
 #send:disabled{opacity:.35}
@@ -171,11 +172,14 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 .hint{text-align:center;font-size:12px;color:var(--muted);margin:6px 0 0}
 
 /* 設定 */
-#modal{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;display:grid;place-items:center;padding:16px}
-.sheet{background:var(--bg);border:1px solid var(--line);border-radius:18px;width:min(560px,100%);max-height:min(88%,calc(var(--vh,100dvh) - 32px));display:flex;flex-direction:column}
+#modal{position:fixed;top:0;left:0;right:0;height:var(--vh,100dvh);background:rgba(0,0,0,.4);z-index:30;display:flex;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))}
+.sheet{background:var(--bg);border:1px solid var(--line);border-radius:18px;width:min(560px,100%);margin:auto;flex:none;overflow:hidden;
+  max-height:calc(var(--vh,100dvh) - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));display:flex;flex-direction:column}
 .sheet h2{margin:0;font-size:18px}
 .sheet .top{display:flex;justify-content:space-between;align-items:center;padding:12px 12px 8px 20px}
-.sheet .body{overflow-y:auto;padding:4px 20px 20px;display:flex;flex-direction:column;gap:18px;-webkit-overflow-scrolling:touch}
+.sheet .top{flex:none}
+.sheet .body{flex:1 1 auto;min-height:0;overscroll-behavior:contain;overflow-y:auto;padding:4px 20px 24px;display:flex;flex-direction:column;gap:18px;-webkit-overflow-scrolling:touch}
 .f{display:flex;flex-direction:column;gap:6px}
 .f label,.f .lab{font-weight:600;font-size:14.5px}
 .f small{color:var(--muted);line-height:1.5}
@@ -226,6 +230,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
           <input type="file" id="file" multiple hidden>
           <button class="pill" id="searchToggle" aria-pressed="false">Google 搜尋</button>
           <span class="grow"></span>
+          <select id="think" aria-label="思考程度" hidden></select>
           <select id="model" aria-label="模型"></select>
           <button id="send" aria-label="送出"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
         </div>
@@ -300,7 +305,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.5-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, thoughts:false, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, thoughts:false, think:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 const saveS = () => LS.set('gh.settings', S);
 
 const DB = {
@@ -407,7 +412,31 @@ function modelOptions() {
   if (!list.some(m => m.id === S.model)) list.unshift({ id: S.model, name: S.model });
   for (const m of list) { const o = h('option', '', m.name); o.value = m.id; sel.append(o); }
   sel.value = S.model;
+  thinkSelect();
   $('#modelCount').textContent = '目前 ' + S.models.length + ' 個模型';
+}
+
+/* 思考程度：依 Google 文件的各模型支援表（2026-11）。回傳 null 表示不提供選項 */
+function thinkOptions(id) {
+  const L = { minimal: '最低', low: '低', medium: '中', high: '高' };
+  const lv = a => ({ kind: 'level', opts: a.map(v => [v, L[v]]) });
+  if (/^gemini-2\.5/.test(id)) {
+    const pro = /pro/.test(id);
+    return { kind: 'budget', opts: [['-1', '自動']].concat(pro ? [] : [['0', '關閉']], [['1024', '低'], ['8192', '中'], [pro ? '32768' : '24576', '高']]) };
+  }
+  if (/^gemini-4/.test(id) || /^gemini-3\.8-flash(?!-lite)/.test(id)) return lv(['low', 'medium', 'high']);
+  if (/^gemini-3(\.\d+)?-flash-lite/.test(id) || /^gemini-3\.6-flash/.test(id) || /^gemini-3-flash/.test(id)) return lv(['minimal', 'low', 'medium', 'high']);
+  if (/^gemini-3-pro/.test(id)) return lv(['low', 'high']);
+  if (/^gemini-3/.test(id)) return lv(['low', 'medium', 'high']);
+  return null;
+}
+function thinkSelect() {
+  const sel = $('#think'), o = thinkOptions(S.model); sel.innerHTML = '';
+  sel.hidden = !o; if (!o) return;
+  const add = (v, t) => { const e = h('option', '', '思考：' + t); e.value = v; sel.append(e); };
+  add('', '預設'); o.opts.forEach(([v, t]) => add(v, t));
+  const cur = S.think[S.model] || '';
+  sel.value = o.opts.some(([v]) => v === cur) ? cur : '';
 }
 
 function welcome() {
@@ -590,7 +619,7 @@ function explain(e) {
     : s === 404 ? '找不到這個模型，請到設定重新載入模型清單。'
     : s === 403 || /API key/i.test(raw) ? 'API 金鑰無效或沒有權限，請到設定檢查金鑰。'
     : s === 503 || s === 500 ? '模型目前忙碌，請稍後重試。'
-    : s === 400 ? '請求被拒絕。若開啟了「Google 搜尋」或「顯示思考摘要」，這個模型可能不支援，請關閉後重試。'
+    : s === 400 ? '請求被拒絕。若設定了思考程度、「Google 搜尋」或「顯示思考摘要」，這個模型可能不支援，請改回預設或關閉後重試。'
     : !s ? '連線失敗，請檢查網路。' : '發生錯誤。';
   return t + (raw ? '（' + (s ? s + '：' : '') + raw.slice(0, 300) + '）' : '');
 }
@@ -619,7 +648,10 @@ async function run(chat, msg) {
   if (S.system.trim()) body.systemInstruction = { parts: [{ text: S.system.trim() }] };
   const gc = {};
   if (S.useTemp) gc.temperature = S.temp;
-  if (S.thoughts) gc.thinkingConfig = { includeThoughts: true };
+  const tc = {}, to = thinkOptions(S.model), tv = S.think[S.model];
+  if (S.thoughts) tc.includeThoughts = true;
+  if (to && tv && to.opts.some(([v]) => v === tv)) { if (to.kind === 'level') tc.thinkingLevel = tv; else tc.thinkingBudget = Number(tv); }
+  if (Object.keys(tc).length) gc.thinkingConfig = tc;
   if (Object.keys(gc).length) body.generationConfig = gc;
   if (S.search) body.tools = [{ googleSearch: {} }];
 
@@ -743,7 +775,8 @@ $('#input').addEventListener('paste', e => { const f = [...(e.clipboardData && e
 $('#attach').onclick = () => $('#file').click();
 $('#file').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
 $('#searchToggle').onclick = () => { S.search = !S.search; saveS(); $('#searchToggle').setAttribute('aria-pressed', S.search); };
-$('#model').onchange = e => { S.model = e.target.value; saveS(); };
+$('#model').onchange = e => { S.model = e.target.value; saveS(); thinkSelect(); };
+$('#think').onchange = e => { if (e.target.value) S.think[S.model] = e.target.value; else delete S.think[S.model]; saveS(); };
 
 /* ---------- 設定 ---------- */
 async function loadModels(quiet) {
@@ -762,7 +795,7 @@ function openSettings() {
   $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system;
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
   $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
-  $('#modal').hidden = false; closeDrawer();
+  $('#modal').hidden = false; closeDrawer(); fit(); $('.sheet .body').scrollTop = 0;
 }
 function closeSettings() { $('#modal').hidden = true; if (cur === null || !cur.messages.length) renderChat(); }
 $('#openSettings').onclick = openSettings; $('#closeSettings').onclick = closeSettings;
