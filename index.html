@@ -142,6 +142,12 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 .code .bar button{padding:6px 9px;border-radius:6px;min-height:32px}
 .code pre{margin:0;padding:12px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .code pre code{background:none;padding:0;font-size:13.5px;line-height:1.55;white-space:pre}
+/* 長程式碼：產生中只露出最後幾行，完成後預設收合 */
+.code.live pre{max-height:calc(13.5px * 1.55 * 10 + 24px);overflow-y:hidden;-webkit-mask-image:linear-gradient(transparent,#000 30%);mask-image:linear-gradient(transparent,#000 30%)}
+.code.long:not(.open) pre{max-height:calc(13.5px * 1.55 * 8 + 24px);overflow-y:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.code .more{display:block;width:100%;min-height:40px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
+.code .more:active{background:var(--bubble)}
+.code.live .more,.code:not(.long) .more{display:none}
 .hljs-keyword,.hljs-selector-tag,.hljs-literal,.hljs-type,.hljs-built_in{color:var(--s3)}
 .hljs-string,.hljs-regexp,.hljs-attr,.hljs-symbol,.hljs-addition{color:var(--s2)}
 .hljs-number,.hljs-title,.hljs-section,.hljs-name,.hljs-meta,.hljs-deletion{color:var(--s1)}
@@ -511,14 +517,17 @@ function decorate(root, final) {
       if (lang && hljs.getLanguage(lang)) code.innerHTML = hljs.highlight(code.textContent, { language: lang }).value;
       else if (final && code.textContent.length < 20000) code.innerHTML = hljs.highlightAuto(code.textContent).value;
     } catch {} }
-    const box = h('div', 'code'), bar = h('div', 'bar');
-    bar.append(h('span', '', lang || '程式碼'));
+    const lines = code.textContent.replace(/\n$/, '').split('\n').length;
+    const box = h('div', 'code' + (!final ? ' live' : lines > 15 ? ' long' : '')), bar = h('div', 'bar');
+    bar.append(h('span', '', (lang || '程式碼') + (lines > 1 ? ' · ' + lines + ' 行' : '') + (!final ? ' · 產生中' : '')));
     const tools = h('span');
     const mk = (act, t) => { const x = h('button', '', t); x.dataset.act = act; x.dataset.lang = lang; tools.append(x); };
     if (final && (/^(html?|svg|xml)$/i.test(lang) ? /<\w/.test(code.textContent) : /^\s*<(!doctype|html|svg)[\s>]/i.test(code.textContent))) mk('preview', '預覽');
     if (final) mk('dl', '下載');
     mk('copycode', '複製'); bar.append(tools);
-    pre.replaceWith(box); box.append(bar, pre);
+    const more = h('button', 'more', '展開全部 ' + lines + ' 行'); more.dataset.act = 'fold';
+    pre.replaceWith(box); box.append(bar, pre, more);
+    if (!final) requestAnimationFrame(() => { pre.scrollTop = pre.scrollHeight; });
   });
 }
 
@@ -1088,6 +1097,12 @@ async function regen() {
 $('#msgs').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act;
+  if (act === 'fold') {
+    const box = b.closest('.code'), open = box.classList.toggle('open');
+    b.textContent = open ? '收合' : '展開全部 ' + box.querySelector('code').textContent.replace(/\n$/, '').split('\n').length + ' 行';
+    if (!open && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start' });
+    return;
+  }
   if (act === 'copycode') return copyText(b.closest('.code').querySelector('code').textContent);
   if (act === 'preview') return openPreview(b.closest('.code').querySelector('code').textContent);
   if (act === 'dl') return downloadCode(b.closest('.code').querySelector('code').textContent, b.dataset.lang);
