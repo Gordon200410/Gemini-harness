@@ -251,8 +251,8 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <input id="key2" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
         <small>主要金鑰達到用量上限時自動改用。</small></div>
       <div class="f"><span class="lab">模型清單</span>
-        <div class="row"><button class="btn" id="refreshModels">從 Google 重新載入</button><small id="modelCount"></small></div>
-        <input id="customModel" type="text" autocapitalize="off" spellcheck="false" placeholder="自訂模型 ID，例如 gemini-3.5-flash"></div>
+        <div class="row"><button class="btn" id="refreshModels">從 Google 重新載入</button><button class="btn" id="builtinModels">用內建清單</button><small id="modelCount"></small></div>
+        <input id="customModel" type="text" autocapitalize="off" spellcheck="false" placeholder="自訂模型 ID，例如 gemini-3.8-flash"></div>
       <div class="f"><label for="system">系統指示</label>
         <textarea id="system" placeholder="例如：一律使用繁體中文回答；數學式用 LaTeX。"></textarea>
         <small>每次對話都會附上。</small></div>
@@ -292,21 +292,36 @@ const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const API = 'https://generativelanguage.googleapis.com/v1beta';
 const FALLBACK_MODELS = [
+  {id:'gemini-4-argon', name:'Gemini 4 Argon'},
+  {id:'gemini-4-carbon', name:'Gemini 4 Carbon'},
+  {id:'gemini-3.8-flash', name:'Gemini 3.8 Flash'},
   {id:'gemini-3.6-flash', name:'Gemini 3.6 Flash'},
-  {id:'gemini-3.5-flash', name:'Gemini 3.5 Flash'},
   {id:'gemini-3.5-flash-lite', name:'Gemini 3.5 Flash-Lite'},
+  {id:'gemini-3.1-pro-preview', name:'Gemini 3.1 Pro'},
   {id:'gemini-3.1-flash-lite', name:'Gemini 3.1 Flash-Lite'},
-  {id:'gemini-3.1-pro-preview', name:'Gemini 3.1 Pro'}
+  {id:'gemini-3-flash-preview', name:'Gemini 3 Flash'},
+  {id:'gemini-2.5-pro', name:'Gemini 2.5 Pro'},
+  {id:'gemini-2.5-flash', name:'Gemini 2.5 Flash'},
+  {id:'gemini-2.5-flash-lite', name:'Gemini 2.5 Flash-Lite'},
+  {id:'gemma-4-31b-it', name:'Gemma 4 31B'},
+  {id:'gemma-4-26b-a4b-it', name:'Gemma 4 26B'}
 ];
+const LIST_VER = 2;
+/* 只留文字對話模型；語音、Live、影像、嵌入、代理等一律排除 */
+const NOT_CHAT = /(embedding|image|banana|tts|live|audio|aqa|robotics|computer-use|transcribe|translate|omni|lyria|veo|imagen|research|antigravity|decision|learnlm|-latest$|-\d{3}$|-\d{2}-\d{4}$|^gemini-[12]\.[05]-.*exp|^gemini-2\.0|^gemini-1)/;
+const isChat = id => (/^gemini-/.test(id) || /^gemma-4/.test(id)) && !NOT_CHAT.test(id);
+const rank = id => /^gemma/.test(id) ? -1 : parseFloat((id.match(/^gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]);
 
 /* ---------- 儲存 ---------- */
 const LS = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
-const S = Object.assign({ key1:'', key2:'', model:'gemini-3.5-flash', customModel:'', system:'', useTemp:false, temp:1,
+const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
   search:false, thoughts:false, think:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
+saveS();
 
 const DB = {
   db: null,
@@ -787,8 +802,9 @@ async function loadModels(quiet) {
     const list = ((await r.json()).models || [])
       .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
       .map(m => ({ id: m.name.replace(/^models\//, ''), name: m.displayName || m.name }))
-      .filter(m => /^gemini/.test(m.id) && !/(embedding|image|tts|live|audio|aqa|robotics|computer-use|transcribe|translate)/.test(m.id));
-    if (list.length) { S.models = list; S.modelsAt = Date.now(); if (!list.some(m => m.id === S.model) && S.model !== S.customModel) S.model = list[0].id; saveS(); modelOptions(); if (!quiet) toast('已載入 ' + list.length + ' 個模型'); }
+      .filter(m => isChat(m.id))
+      .sort((x, y) => rank(y.id) - rank(x.id) || x.id.localeCompare(y.id));
+    if (list.length) { S.models = list; S.modelsAt = Date.now(); if (!list.some(m => m.id === S.model) && S.model !== S.customModel) S.model = (list.find(m => m.id === 'gemini-3.8-flash') || list[0]).id; saveS(); modelOptions(); if (!quiet) toast('已載入 ' + list.length + ' 個模型'); }
   } catch (e) { if (!quiet) toast(explain(e).slice(0, 60)); }
 }
 function openSettings() {
@@ -804,6 +820,7 @@ $('#key1').onchange = e => { S.key1 = e.target.value.trim(); saveS(); loadModels
 $('#key2').onchange = e => { S.key2 = e.target.value.trim(); saveS(); };
 $('#showKey').onclick = () => { const k = $('#key1'), on = k.type === 'password'; k.type = $('#key2').type = on ? 'text' : 'password'; $('#showKey').textContent = on ? '隱藏' : '顯示'; };
 $('#refreshModels').onclick = () => loadModels(false);
+$('#builtinModels').onclick = () => { S.models = FALLBACK_MODELS; S.modelsAt = Date.now(); if (!S.models.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); toast('已改用內建清單'); };
 $('#customModel').onchange = e => { S.customModel = e.target.value.trim(); if (S.customModel) S.model = S.customModel; saveS(); modelOptions(); };
 $('#system').onchange = e => { S.system = e.target.value; saveS(); };
 $('#useTemp').onchange = e => { S.useTemp = e.target.checked; $('#temp').disabled = !S.useTemp; saveS(); };
