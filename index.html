@@ -75,9 +75,16 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 .icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;flex:none}
 .icon:active,.item .t:active{opacity:.6}
 .icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#gemSel{min-height:36px;border-radius:999px;border:1px solid var(--line);background:transparent;padding:0 8px;font-size:14px;max-width:32vw;flex:none}
+#total{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;padding:0 4px}
 #title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;font-size:15px;color:var(--muted)}
 #scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-#msgs{max-width:780px;margin:0 auto;padding:12px 20px 28px;display:flex;flex-direction:column;gap:22px}
+#scroll{display:flex;flex-direction:column}
+#msgs{max-width:780px;width:100%;flex:none;margin:0 auto;padding:12px 20px 28px;display:flex;flex-direction:column;gap:22px}
+#msgs.empty{flex:1 0 auto;justify-content:center;padding-top:8px;padding-bottom:8px}
+#app.compact .chips,#app.compact .welcome p,#app.compact .hint{display:none}
+#app.compact .welcome h1{font-size:24px}
+#app.compact header{min-height:44px;padding-top:2px;padding-bottom:2px}
 
 .msg.user{align-self:flex-end;max-width:86%;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .bubble{background:var(--bubble);border-radius:22px 22px 6px 22px;padding:10px 15px;overflow-wrap:anywhere}
@@ -92,7 +99,7 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 .acts{display:flex;flex-wrap:wrap;align-items:center;gap:2px;font-size:13px;color:var(--muted)}
 .acts button{padding:6px 9px;border-radius:7px;min-height:34px}
 .acts button:active{background:var(--bubble)}
-.acts .meta{margin-left:6px;font-variant-numeric:tabular-nums}
+.acts .meta{margin-left:6px;font-variant-numeric:tabular-nums;white-space:normal}
 
 .msg.model{min-width:0}
 .md{overflow-wrap:anywhere}
@@ -139,7 +146,7 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 /* 歡迎畫面 */
-.welcome{margin:auto;max-width:620px;padding:8vh 0 0;display:flex;flex-direction:column;gap:18px}
+.welcome{margin:0 auto;width:100%;max-width:620px;padding:0;display:flex;flex-direction:column;gap:18px}
 .welcome h1{font-size:32px;line-height:1.3;margin:0;font-weight:600;align-self:flex-start;background:linear-gradient(90deg,#4285f4,#9b72cb 55%,#d96570);-webkit-background-clip:text;background-clip:text;color:transparent}
 .welcome p{margin:0;color:var(--muted)}
 .chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
@@ -162,6 +169,9 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 .cbar .icon{width:38px;height:38px;border:1px solid var(--line)}
 .pill{min-height:38px;padding:0 12px;border-radius:999px;border:1px solid var(--line);font-size:14px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .pill[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+#aspect,#imgModel{min-height:38px;border-radius:999px;border:1px solid var(--line);background:transparent;padding:0 8px;font-size:14px;max-width:34vw;min-width:0}
+.gens{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.gens img{max-width:min(420px,100%);max-height:420px;border-radius:14px;display:block;cursor:zoom-in;background:#fff}
 #think{min-height:38px;border-radius:999px;border:1px solid var(--line);background:transparent;padding:0 8px;font-size:14px;flex:none}
 #model{min-height:38px;border-radius:999px;border:1px solid var(--line);background:transparent;padding:0 10px;font-size:14px;max-width:34vw;min-width:0}
 .grow{flex:1}
@@ -189,12 +199,16 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 .row input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
 .row input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
 .sheet a{color:var(--accent)}
+#preview{position:fixed;top:0;left:0;right:0;height:var(--vh,100dvh);z-index:45;background:var(--bg);display:flex;flex-direction:column}
+#preview .pbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(6px + env(safe-area-inset-top)) 12px 6px 18px;border-bottom:1px solid var(--line);font-weight:600}
+#pframe{flex:1;width:100%;border:0;background:#fff}
 #viewer{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.93);color:#fff}
 #vstage{position:absolute;inset:0;overflow:auto;display:flex;-webkit-overflow-scrolling:touch;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 #vimg{margin:auto;max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;background:#fff;flex:none}
 #viewer.zoom #vimg{max-width:none;max-height:none;cursor:zoom-out}
 #viewer button{position:absolute;width:46px;height:46px;border-radius:50%;background:rgba(60,64,67,.85);color:#fff;font-size:22px;display:grid;place-items:center}
 #vclose{top:calc(14px + env(safe-area-inset-top));right:14px}
+#vdl{top:calc(14px + env(safe-area-inset-top));right:70px}
 #vprev{left:14px;top:50%;transform:translateY(-50%)}
 #vnext{right:14px;top:50%;transform:translateY(-50%)}
 #vinfo{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));background:rgba(60,64,67,.85);border-radius:999px;padding:5px 14px;font-size:13.5px;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
@@ -205,7 +219,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 <body>
 <div id="app">
   <aside id="side" aria-label="對話清單">
-    <div class="brand"><i></i>Gemini 對話台</div>
+    <div class="brand"><i></i>Gemini</div>
     <button class="btn primary" id="newChat">＋ 新對話</button>
     <input id="search" type="search" placeholder="搜尋對話" autocomplete="off">
     <nav id="chatList"></nav>
@@ -216,6 +230,8 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
     <header>
       <button class="icon" id="sideToggle" aria-label="開關對話清單"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg></button>
       <div id="title"></div>
+      <span id="total" hidden></span>
+      <select id="gemSel" aria-label="Skill"></select>
       <button class="icon" id="newChat2" aria-label="新對話"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
     </header>
     <div id="scroll"><div id="msgs"></div></div>
@@ -229,7 +245,10 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
           <button class="icon" id="attach" aria-label="加入檔案"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
           <input type="file" id="file" multiple hidden>
           <button class="pill" id="searchToggle" aria-pressed="false">Google 搜尋</button>
+          <button class="pill" id="imgToggle" aria-pressed="false">生成圖片</button>
           <span class="grow"></span>
+          <select id="aspect" aria-label="圖片比例" hidden><option value="">比例：自動</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option><option value="16:9">16:9</option><option value="9:16">9:16</option></select>
+          <select id="imgModel" aria-label="圖片模型" hidden></select>
           <select id="think" aria-label="思考程度" hidden></select>
           <select id="model" aria-label="模型"></select>
           <button id="send" aria-label="送出"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
@@ -268,6 +287,11 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       <div class="f"><span class="lab">模型清單</span>
         <div class="row"><button class="btn" id="refreshModels">從 Google 重新載入</button><button class="btn" id="builtinModels">用內建清單</button><small id="modelCount"></small></div>
         <input id="customModel" type="text" autocapitalize="off" spellcheck="false" placeholder="自訂模型 ID，例如 gemini-3.8-flash"></div>
+      <div class="f"><span class="lab">Skill（自訂指示）</span>
+        <div class="row"><select id="gemEdit" aria-label="要編輯的 Skill" style="flex:1;width:auto"></select><button class="btn" id="gemAdd">新增</button><button class="btn danger" id="gemDel">刪除</button></div>
+        <input id="gemName" type="text" placeholder="名稱" aria-label="Skill 名稱">
+        <textarea id="gemPrompt" placeholder="這個 Skill 的指示，例如角色、語氣、輸出格式" aria-label="Skill 指示" style="min-height:130px"></textarea>
+        <small>在對話上方的「Skill」選單切換，每個對話各自記住。Skill 的指示會接在系統指示後面一起送出。</small></div>
       <div class="f"><label for="system">系統指示</label>
         <textarea id="system" placeholder="例如：一律使用繁體中文回答；數學式用 LaTeX。"></textarea>
         <small>每次對話都會附上。</small></div>
@@ -276,6 +300,9 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <small>未勾選時使用模型預設值。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="thoughts"><label for="thoughts">顯示思考摘要</label></div>
         <small>部分模型不支援，出現錯誤時請關閉。</small></div>
+      <div class="f"><label for="fx">費用換算匯率（1 美元兌新台幣）</label>
+        <input id="fx" type="text" inputmode="decimal" style="max-width:160px">
+        <small>估價依 Gemini API 公開牌價計算，不含快取折扣、Google 搜尋費用與免費額度，實際金額以帳單為準。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="enterSend"><label for="enterSend">按 Enter 送出（Shift + Enter 換行）</label></div></div>
       <div class="f"><label for="theme">外觀</label>
         <select id="theme"><option value="auto">跟隨系統</option><option value="light">淺色</option><option value="dark">深色</option></select></div>
@@ -285,9 +312,14 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
     </div>
   </div>
 </div>
+<div id="preview" hidden role="dialog" aria-label="預覽">
+  <div class="pbar"><span>預覽</span><button class="btn" id="pclose">關閉</button></div>
+  <iframe id="pframe" title="程式碼預覽" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
+</div>
 <div id="viewer" hidden role="dialog" aria-label="檢視圖片">
   <div id="vstage"><img id="vimg" alt=""></div>
   <button id="vclose" aria-label="關閉">✕</button>
+  <button id="vdl" aria-label="下載圖片">↓</button>
   <button id="vprev" aria-label="上一張">‹</button>
   <button id="vnext" aria-label="下一張">›</button>
   <div id="vinfo"></div>
@@ -333,10 +365,17 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, thoughts:false, think:{}, provider:'studio', vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, thoughts:false, think:{}, gems:null, gem:'', imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
+const DEFAULT_GEMS = [
+  { id: 'stem', name: '理工家教', prompt: '你是大學教授，講解對象是初學者。請用繁體中文詳細說明，不跳步驟。有比較簡單的算法時優先採用（例如部分分式用代入法），計算過程逐步寫出（例如部分分式的每個係數分別列出）。輸出前仔細驗算。\n\n公式一律用 LaTeX：行內用 $...$，獨立一行用 $$...$$，只用最基本的標準語法，不要用 \\bm、\\underbrace、\\overbrace；需要粗體時用 \\mathbf 或數學式外的 Markdown。公式和說明分開：子項的解釋寫成公式下方的條列文字，不要寫進大括號裡。輸出前檢查所有括號與符號都成對。' },
+  { id: 'english', name: '英語口說家教', prompt: 'You are my private English speaking tutor. My level is around TOEIC 600. Talk with me in simple, natural spoken English, one short turn at a time, and end each turn with one question so I keep talking. After each of my replies, first point out my mistakes: show the corrected sentence and a one-line explanation in Traditional Chinese, plus one more natural way to say it. Then continue the conversation. Do not write long paragraphs.' },
+  { id: 'code', name: '程式助手', prompt: '你是程式助手，用繁體中文說明。請提供可以直接使用的完整程式碼，不要省略或用「其餘不變」帶過；修改既有程式時輸出完整的新版本。網頁與 userscript 以單一檔案為主，並考慮 iPad Safari 的相容性。先給程式碼，再用幾行說明重點與使用方式。' }
+];
+if (!Array.isArray(S.gems)) S.gems = JSON.parse(JSON.stringify(DEFAULT_GEMS));
+const gemOf = id => S.gems.find(g => g.id === id);
 /* 兩種服務：studio = Gemini API（AI Studio 金鑰）；vertex = Google Cloud 的 Vertex AI / Agent Platform 金鑰 */
 const isVertex = () => S.provider === 'vertex';
 const VERTEX_MODELS = FALLBACK_MODELS.filter(m => !/^gemma/.test(m.id));
@@ -412,7 +451,11 @@ function decorate(root, final) {
     } catch {} }
     const box = h('div', 'code'), bar = h('div', 'bar');
     bar.append(h('span', '', lang || '程式碼'));
-    const b = h('button', '', '複製'); b.dataset.act = 'copycode'; bar.append(b);
+    const tools = h('span');
+    const mk = (act, t) => { const x = h('button', '', t); x.dataset.act = act; x.dataset.lang = lang; tools.append(x); };
+    if (final && (/^(html?|svg|xml)$/i.test(lang) ? /<\w/.test(code.textContent) : /^\s*<(!doctype|html|svg)[\s>]/i.test(code.textContent))) mk('preview', '預覽');
+    if (final) mk('dl', '下載');
+    mk('copycode', '複製'); bar.append(tools);
     pre.replaceWith(box); box.append(bar, pre);
   });
 }
@@ -453,11 +496,53 @@ function modelOptions() {
   if (!list.some(m => m.id === S.model)) list.unshift({ id: S.model, name: S.model });
   for (const m of list) { const o = h('option', '', m.name); o.value = m.id; sel.append(o); }
   sel.value = S.model;
-  thinkSelect();
+  thinkSelect(); if (S.imgMode) $('#think').hidden = true;
   $('#modelCount').textContent = '目前 ' + modelList().length + ' 個模型';
 }
 
 /* 思考程度：依 Google 文件的各模型支援表（2026-11）。回傳 null 表示不提供選項 */
+/* 價格：Gemini API 標準付費方案，美元／每百萬 tokens（2026-11 查詢）。依日期切換的優惠價寫在 until。 */
+const PRICES = [
+  [/^gemini-4-argon/,            [{ until: '2026-12-01', i: 2, o: 10 }, { i: 4, o: 20 }]],
+  [/^gemini-4-carbon/,           [{ i: 2, o: 10 }]],
+  [/^gemini-3\.[68]-flash(?!-lite)/, [{ until: '2027-01-01', i: 0.75, o: 3.75 }, { i: 1.5, o: 7.5 }]],
+  [/^gemini-3\.5-flash-lite/,     [{ i: 0.30, o: 2.50 }]],
+  [/^gemini-3\.1-pro/,            [{ i: 2, o: 12, big: { i: 4, o: 18 } }]],
+  [/^gemini-3\.1-flash-lite/,     [{ i: 0.25, o: 1.50 }]],
+  [/^gemini-3-flash/,             [{ i: 0.50, o: 3.00 }]],
+  [/^gemini-2\.5-pro/,            [{ i: 1.25, o: 10, big: { i: 2.5, o: 15 } }]],
+  [/^gemini-2\.5-flash-lite/,     [{ i: 0.10, o: 0.40 }]],
+  [/^gemini-2\.5-flash/,          [{ i: 0.30, o: 2.50 }]]
+];
+function priceOf(id, when, promptTokens) {
+  const row = PRICES.find(([re]) => re.test(id)); if (!row) return null;
+  const day = new Date(when || Date.now()).toISOString().slice(0, 10);
+  const p = row[1].find(x => !x.until || day < x.until) || row[1][row[1].length - 1];
+  return p.big && promptTokens > 200000 ? p.big : p;
+}
+function costOf(m) {
+  const u = m.usage; if (!u) return null;
+  const id = m.mid || String(m.model || '').replace(/^Vertex · /, '');
+  const inTok = (u.promptTokenCount || 0) + (u.toolUsePromptTokenCount || 0);
+  const outTok = (u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0);
+  const p = priceOf(id, m.at, inTok); if (!p) return { inTok, outTok, usd: null };
+  return { inTok, outTok, usd: (inTok * p.i + outTok * p.o) / 1e6 };
+}
+const fmtTok = n => n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : String(n);
+function fmtMoney(usd) {
+  const nt = usd * (S.fx || 32.4);
+  return '約 NT$' + (nt < 0.01 ? '<0.01' : nt < 10 ? nt.toFixed(2) : nt.toFixed(1)) + '（US$' + (usd < 0.0001 ? '<0.0001' : usd.toFixed(usd < 0.01 ? 4 : 3)) + '）';
+}
+function chatCost(c) {
+  let usd = 0, any = false, unknown = false;
+  for (const m of (c && c.messages) || []) { const k = costOf(m); if (!k) continue; if (k.usd == null) unknown = true; else { usd += k.usd; any = true; } }
+  return any ? { usd, unknown } : null;
+}
+function showTotal() {
+  const t = cur && chatCost(cur), e = $('#total');
+  e.hidden = !t; if (t) e.textContent = '本對話 ' + fmtMoney(t.usd).replace(/（.*）/, '') + (t.unknown ? '＋' : '');
+}
+
 function thinkOptions(id) {
   const L = { minimal: '最低', low: '低', medium: '中', high: '高' };
   const lv = a => ({ kind: 'level', opts: a.map(v => [v, L[v]]) });
@@ -478,6 +563,72 @@ function thinkSelect() {
   add('', '預設'); o.opts.forEach(([v, t]) => add(v, t));
   const cur = S.think[S.model] || '';
   sel.value = o.opts.some(([v]) => v === cur) ? cur : '';
+}
+
+const IMG_ENABLED = false;   // 圖片生成先停用；改成 true 即可恢復
+const IMG_MODELS = [
+  ['gemini-nano-banana-2.1', 'Nano Banana 2.1'], ['gemini-3.1-flash-image', 'Nano Banana 2'], ['gemini-3.1-flash-lite-image', 'Nano Banana 2 Lite'],
+  ['gemini-3-pro-image', 'Nano Banana Pro'], ['gemini-2.5-flash-image', 'Nano Banana']
+];
+function applyImgMode() {
+  if (!IMG_ENABLED) S.imgMode = false;
+  $('#imgToggle').hidden = !IMG_ENABLED;
+  const on = !!S.imgMode, sel = $('#imgModel');
+  if (!sel.options.length) IMG_MODELS.forEach(([v, t]) => { const o = h('option', '', t); o.value = v; sel.append(o); });
+  sel.value = S.imgModel; if (!sel.value) { sel.value = S.imgModel = IMG_MODELS[1][0]; }
+  $('#aspect').value = S.aspect;
+  $('#imgToggle').setAttribute('aria-pressed', on);
+  sel.hidden = $('#aspect').hidden = !on;
+  $('#model').hidden = $('#searchToggle').hidden = on;
+  if (on) $('#think').hidden = true; else thinkSelect();
+  $('#input').placeholder = on ? '描述想生成的圖片，或附上圖片說明要怎麼改' : '輸入訊息，或貼上圖片';
+}
+const sniffMime = d => d.startsWith('/9j/') ? 'image/jpeg' : d.startsWith('UklGR') ? 'image/webp' : 'image/png';
+function pickImages(j) {
+  const imgs = [], texts = [], arr = x => x == null ? [] : [].concat(x);
+  const take = c => { if (!c || typeof c !== 'object') return; if (c.type === 'image' && typeof c.data === 'string') imgs.push({ mime: c.mime_type || sniffMime(c.data), data: c.data }); else if (c.type === 'text' && c.text) texts.push(c.text); };
+  for (const st of arr(j.steps)) { if (st && st.type && st.type !== 'model_output') continue; arr(st && st.content).forEach(take); }
+  if (!imgs.length) arr(j.outputs).forEach(o => { take(o); arr(o && o.content).forEach(take); });
+  if (!imgs.length && j.output_image && j.output_image.data) take(Object.assign({ type: 'image' }, j.output_image));
+  return { imgs, text: texts.join('\n\n') };
+}
+async function runImage(chat, msg) {
+  const keys = [S.key1, S.key2].filter(Boolean), idx = chat.messages.indexOf(msg), u = chat.messages[idx - 1] || {};
+  const input = [];
+  if (u.text) input.push({ type: 'text', text: u.text });
+  for (const a of u.atts || []) if (isImg(a)) input.push({ type: 'image', mime_type: a.mime, data: a.data });
+  const body = { model: S.imgModel, input: input.length === 1 && input[0].type === 'text' ? u.text : input, response_format: Object.assign({ type: 'image' }, S.aspect ? { aspect_ratio: S.aspect } : {}) };
+  const ctrl = new AbortController();
+  busy = { ctrl, msg }; msg.streaming = true; msg.model = S.imgModel; msg.mid = S.imgModel; msg.at = Date.now(); updateSend(); refreshMsg(msg);
+  try {
+    if (!keys.length) throw Object.assign(new Error('圖片生成目前走 Gemini API，需要 AI Studio 金鑰。請到設定把「服務」切到 Gemini API 填入金鑰，填好後可再切回 Vertex。'), { plain: true });
+    if (!input.length) throw Object.assign(new Error('請輸入圖片描述。'), { plain: true });
+    let j;
+    for (let k = 0; k < keys.length; k++) {
+      const r = await fetch(API + '/interactions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keys[k] }, body: JSON.stringify(body), signal: ctrl.signal });
+      if (r.ok) { j = await r.json(); break; }
+      let m = ''; try { m = (await r.json()).error.message; } catch {}
+      if ((r.status === 429 || r.status === 403) && k < keys.length - 1) continue;
+      throw Object.assign(new Error(m), { status: r.status });
+    }
+    const got = pickImages(j);
+    msg.images = got.imgs; msg.text = got.text;
+    if (!got.imgs.length) msg.note = got.text ? '模型只回了文字，沒有產生圖片。' : '模型沒有回傳圖片，可能是內容被安全機制擋下，換個描述再試。';
+  } catch (e) {
+    if (e.name === 'AbortError') msg.note = '已停止。';
+    else if (e.plain) msg.error = e.message;
+    else { const v = S.provider; S.provider = 'studio'; msg.error = explain(e); S.provider = v; }
+  }
+  delete msg.streaming; busy = null; updateSend();
+  refreshMsg(msg); await persist(chat); renderList();
+  if (chat.auto && msg.images && msg.images.length) autoTitle(chat);
+}
+
+function gemOptions() {
+  const sel = $('#gemSel'); sel.innerHTML = '';
+  const add = (v, t) => { const o = h('option', '', t); o.value = v; sel.append(o); };
+  add('', 'Skill：無'); S.gems.forEach(g => add(g.id, 'Skill：' + g.name));
+  const v = cur ? (cur.gem || '') : S.gem; sel.value = gemOf(v) ? v : '';
 }
 
 function welcome() {
@@ -521,12 +672,14 @@ function userEl(m) {
 function modelEl(m) {
   const el = h('div', 'msg model'); el.dataset.id = m.id;
   const th = h('details', 'thoughts'); th.append(h('summary', '', '思考過程'), h('div', 'md'));
-  const md = h('div', 'md'), foot = h('div', 'foot');
-  el.append(th, md, foot);
+  const gens = h('div', 'gens'), md = h('div', 'md'), foot = h('div', 'foot');
+  el.append(th, gens, md, foot);
   el._update = () => {
     const final = !m.streaming;
     th.hidden = !m.thoughts;
     if (m.thoughts) th.lastChild.innerHTML = renderMD(m.thoughts);
+    gens.hidden = !(m.images && m.images.length);
+    if (!gens.hidden && gens.childElementCount !== m.images.length) { gens.innerHTML = ''; m.images.forEach(g => { const i = new Image(); i.src = 'data:' + g.mime + ';base64,' + g.data; i.alt = '生成的圖片'; i.dataset.act = 'viewgen'; i.tabIndex = 0; i.setAttribute('role', 'button'); gens.append(i); }); }
     if (m.text) { md.innerHTML = renderMD(m.text); decorate(md, final); }
     else md.innerHTML = m.streaming ? '<span class="dots" aria-label="產生中"><i></i><i></i><i></i></span>' : '';
     foot.innerHTML = '';
@@ -540,11 +693,14 @@ function modelEl(m) {
     if (m.error) foot.append(h('div', 'err', m.error));
     const acts = h('div', 'acts');
     if (m.text) { const c = h('button', '', '複製'); c.dataset.act = 'copy'; acts.append(c); }
+    if (m.text && window.speechSynthesis) { const v = h('button', '', speakId === m.id ? '停止朗讀' : '朗讀'); v.dataset.act = 'speak'; acts.append(v); }
+    if (IMG_ENABLED && m.images && m.images.length) { const e = h('button', '', '修改這張圖'); e.dataset.act = 'editimg'; acts.append(e); }
     const isLast = cur && cur.messages[cur.messages.length - 1] === m;
     if (isLast) { const r = h('button', '', m.error && !m.text ? '重試' : '重新產生'); r.dataset.act = 'regen'; acts.append(r); }
     const u = m.usage, bits = [];
     if (m.model) bits.push(m.model);
-    if (u) bits.push((u.promptTokenCount || 0) + ' → ' + ((u.candidatesTokenCount || 0) + (u.thoughtsTokenCount || 0)) + ' tokens');
+    const k = costOf(m);
+    if (k) bits.push('輸入 ' + fmtTok(k.inTok) + ' · 輸出 ' + fmtTok(k.outTok), k.usd == null ? '無此模型價格' : fmtMoney(k.usd));
     if (bits.length) acts.append(h('span', 'meta', bits.join(' · ')));
     foot.append(acts);
   };
@@ -554,9 +710,11 @@ function modelEl(m) {
 
 function renderChat() {
   const box = $('#msgs'); box.innerHTML = ''; els.clear();
-  $('#title').textContent = cur ? cur.title : '新對話';
+  $('#title').textContent = cur ? cur.title : '新對話'; showTotal();
   document.title = (cur ? cur.title + ' · ' : '') + 'Gemini 對話台';
-  if (!cur || !cur.messages.length) { box.append(welcome()); return; }
+  gemOptions();
+  const empty = !cur || !cur.messages.length; box.classList.toggle('empty', empty);
+  if (empty) { box.append(welcome()); $('#toBottom').hidden = true; return; }
   for (const m of cur.messages) { const el = m.role === 'user' ? userEl(m) : modelEl(m); els.set(m.id, el); box.append(el); }
   stick = true; toBottom();
 }
@@ -580,6 +738,40 @@ function renderAtts() {
     const x = h('button', '', '✕'); x.setAttribute('aria-label', '移除 ' + a.name); x.onclick = () => { pending.splice(i, 1); renderAtts(); updateSend(); }; c.append(x); r.append(c); });
 }
 
+/* ---------- 程式碼預覽與下載 ---------- */
+function openPreview(code) {
+  // 沙盒 iframe：沒有 allow-same-origin，預覽內容讀不到這個頁面的金鑰與對話
+  $('#pframe').srcdoc = code; $('#preview').hidden = false;
+}
+function closePreview() { $('#preview').hidden = true; $('#pframe').srcdoc = ''; }
+const EXT = { js: 'js', javascript: 'js', ts: 'ts', typescript: 'ts', py: 'py', python: 'py', html: 'html', css: 'css', json: 'json', sh: 'sh', bash: 'sh', c: 'c', cpp: 'cpp', java: 'java', matlab: 'm', md: 'md', markdown: 'md', tex: 'tex', latex: 'tex', sql: 'sql', swift: 'swift', xml: 'xml', yml: 'yml', yaml: 'yml', svg: 'svg' };
+function downloadCode(code, lang) {
+  const name = /==UserScript==/.test(code) ? 'script.user.js' : 'code.' + (EXT[(lang || '').toLowerCase()] || (/^\s*<(!doctype|html)/i.test(code) ? 'html' : 'txt'));
+  const a = h('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/plain' })); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+
+/* ---------- 朗讀 ---------- */
+let speakId = null, speakTok = 0;
+function stopSpeak() { speakTok++; speakId = null; try { speechSynthesis.cancel(); } catch {} document.querySelectorAll('[data-act="speak"]').forEach(b => b.textContent = '朗讀'); }
+function speak(m, btn) {
+  if (speakId === m.id) return stopSpeak();
+  stopSpeak();
+  const el = els.get(m.id); if (!el) return;
+  const c = el.querySelector(':scope > .md').cloneNode(true);
+  c.querySelectorAll('.code, .katex, .tablewrap').forEach(x => x.remove());
+  const text = c.textContent.replace(/\s+/g, ' ').trim(); if (!text) return toast('沒有可朗讀的文字');
+  const latin = (text.match(/[A-Za-z]/g) || []).length, cjk = (text.match(/[\u3400-\u9fff]/g) || []).length;
+  const lang = latin > cjk * 2 ? 'en-US' : 'zh-TW';
+  const parts = text.match(/[^。！？.!?\n]{1,180}[。！？.!?]*/g) || [text];
+  const tok = ++speakTok; speakId = m.id; btn.textContent = '停止朗讀';
+  parts.forEach((p, i) => {
+    const u = new SpeechSynthesisUtterance(p); u.lang = lang;
+    if (i === parts.length - 1) u.onend = u.onerror = () => { if (tok === speakTok) stopSpeak(); };
+    speechSynthesis.speak(u);
+  });
+}
+
 /* ---------- 圖片檢視 ---------- */
 const isImg = a => a.kind !== 'text' && (a.mime || '').startsWith('image/');
 let view = { list: [], i: 0 };
@@ -593,7 +785,15 @@ function showView() {
 function openViewer(list, i) { if (!list.length) return; view = { list, i: Math.max(0, i) }; $('#viewer').hidden = false; showView(); }
 function closeViewer() { $('#viewer').hidden = true; $('#vimg').removeAttribute('src'); }
 function stepView(d) { view.i = (view.i + d + view.list.length) % view.list.length; showView(); }
+$('#pclose').onclick = closePreview;
 $('#vclose').onclick = closeViewer;
+$('#vdl').onclick = () => {
+  const a0 = view.list[view.i]; if (!a0) return;
+  const bin = atob(a0.data), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  const ext = (a0.mime.split('/')[1] || 'png').replace('jpeg', 'jpg'), base = (a0.name || 'image').replace(/\.[a-z0-9]+$/i, '');
+  const a = h('a'); a.href = URL.createObjectURL(new Blob([buf], { type: a0.mime })); a.download = base + '.' + ext;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+};
 $('#vprev').onclick = () => stepView(-1);
 $('#vnext').onclick = () => stepView(1);
 $('#vstage').onclick = e => { if (e.target.id !== 'vimg') closeViewer(); };
@@ -648,6 +848,7 @@ function toContents(msgs) {
       for (const a of m.atts || []) parts.push(a.kind === 'text' ? { text: '【附件：' + a.name + '】\n' + a.text } : { inlineData: { mimeType: a.mime, data: a.data } });
       if (m.text) parts.push({ text: m.text });
     } else if (m.text) parts.push({ text: m.text });
+    else if (m.images && m.images.length) parts.push({ text: '（已依要求生成圖片）' });
     if (!parts.length) continue;
     const last = out[out.length - 1];
     if (last && last.role === m.role) last.parts.push(...parts); else out.push({ role: m.role, parts });
@@ -683,10 +884,12 @@ async function stream(key, model, body, signal, onChunk) {
 }
 
 async function run(chat, msg) {
+  if (msg.img) return runImage(chat, msg);
   const keys = activeKeys();
   const idx = chat.messages.indexOf(msg);
   const body = { contents: toContents(chat.messages.slice(0, idx)) };
-  if (S.system.trim()) body.systemInstruction = { parts: [{ text: S.system.trim() }] };
+  const gem = gemOf(chat.gem), sys = [S.system.trim(), gem && gem.prompt.trim()].filter(Boolean).join('\n\n');
+  if (sys) body.systemInstruction = { parts: [{ text: sys }] };
   const gc = {};
   if (S.useTemp) gc.temperature = S.temp;
   const tc = {}, to = thinkOptions(S.model), tv = S.think[S.model];
@@ -697,7 +900,7 @@ async function run(chat, msg) {
   if (S.search) body.tools = [{ googleSearch: {} }];
 
   const ctrl = new AbortController();
-  busy = { ctrl, msg }; msg.streaming = true; msg.model = (isVertex() ? 'Vertex · ' : '') + S.model; updateSend();
+  busy = { ctrl, msg }; msg.streaming = true; msg.model = (isVertex() ? 'Vertex · ' : '') + S.model; msg.mid = S.model; msg.at = Date.now(); updateSend();
   let raf = 0;
   const paint = () => { if (!raf) raf = setTimeout(() => { raf = 0; refreshMsg(msg); }, 70); };
   const onChunk = j => {
@@ -724,7 +927,7 @@ async function run(chat, msg) {
     if (e.name === 'AbortError') msg.note = '已停止。'; else msg.error = explain(e);
   }
   clearTimeout(raf); delete msg.streaming; busy = null; updateSend();
-  refreshMsg(msg); await persist(chat); renderList();
+  refreshMsg(msg); if (cur === chat) showTotal(); await persist(chat); renderList();
   if (chat.auto && msg.text) autoTitle(chat);
 }
 
@@ -744,18 +947,18 @@ async function autoTitle(chat) {
 }
 
 /* ---------- 動作 ---------- */
-function newChat() { if (busy) busy.ctrl.abort(); cur = null; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); if (!narrow()) $('#input').focus(); }
-function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; cur = c; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); }
+function newChat() { stopSpeak(); if (busy) busy.ctrl.abort(); cur = null; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); if (!narrow()) $('#input').focus(); }
+function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; stopSpeak(); cur = c; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); }
 
 async function submit() {
   if (busy) { busy.ctrl.abort(); return; }
   const inp = $('#input'), text = inp.value.trim();
   if (!text && !pending.length) return;
   if (!activeKeys().length) { openSettings(); toast('請先填入 API 金鑰'); return; }
-  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true }; chats.push(cur); S.last = cur.id; saveS(); }
+  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; chats.push(cur); S.last = cur.id; saveS(); }
   if (editing) { const i = cur.messages.findIndex(m => m.id === editing); if (i >= 0) cur.messages.length = i; editing = null; $('#banner').hidden = true; }
   const u = { id: uid(), role: 'user', text, atts: pending };
-  const m = { id: uid(), role: 'model', text: '' };
+  const m = { id: uid(), role: 'model', text: '' }; if (S.imgMode) m.img = true;
   cur.messages.push(u, m);
   pending = []; inp.value = ''; grow(); renderAtts();
   renderChat(); renderList();
@@ -764,7 +967,7 @@ async function submit() {
 async function regen() {
   if (busy || !cur) return;
   const last = cur.messages[cur.messages.length - 1]; if (!last || last.role !== 'model') return;
-  const m = { id: uid(), role: 'model', text: '' };
+  const m = { id: uid(), role: 'model', text: '' }; if (last.img) m.img = true;
   cur.messages[cur.messages.length - 1] = m;
   renderChat(); await run(cur, m);
 }
@@ -773,9 +976,18 @@ $('#msgs').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const act = b.dataset.act;
   if (act === 'copycode') return copyText(b.closest('.code').querySelector('code').textContent);
+  if (act === 'preview') return openPreview(b.closest('.code').querySelector('code').textContent);
+  if (act === 'dl') return downloadCode(b.closest('.code').querySelector('code').textContent, b.dataset.lang);
   const el = b.closest('.msg'), m = cur && cur.messages.find(x => x.id === el.dataset.id); if (!m) return;
   if (act === 'view') { const imgs = (m.atts || []).filter(isImg); return openViewer(imgs, [...el.querySelectorAll('.atts img')].indexOf(b)); }
+  if (act === 'viewgen') return openViewer(m.images.map((g, i) => ({ mime: g.mime, data: g.data, name: '生成的圖片 ' + (i + 1) })), [...el.querySelectorAll('.gens img')].indexOf(b));
+  if (act === 'editimg') {
+    const g = m.images[m.images.length - 1];
+    pending.push({ kind: 'inline', name: '生成的圖片.' + (g.mime.split('/')[1] || 'png'), mime: g.mime, data: g.data });
+    S.imgMode = true; saveS(); applyImgMode(); renderAtts(); updateSend(); $('#input').focus(); return;
+  }
   if (act === 'copy') copyText(m.text);
+  else if (act === 'speak') speak(m, b);
   else if (act === 'regen') regen();
   else if (act === 'edit') {
     if (busy) return toast('請先停止目前的回覆');
@@ -810,13 +1022,17 @@ $('#sideToggle').onclick = () => { if (narrow()) $('#app').classList.toggle('dra
 $('#scrim').onclick = closeDrawer;
 $('#send').onclick = submit;
 $('#toBottom').onclick = () => { stick = true; toBottom(); };
-$('#scroll').addEventListener('scroll', () => { const s = $('#scroll'); stick = s.scrollHeight - s.scrollTop - s.clientHeight < 60; $('#toBottom').hidden = stick; }, { passive: true });
+$('#scroll').addEventListener('scroll', () => { const s = $('#scroll'); stick = s.scrollHeight - s.scrollTop - s.clientHeight < 60; $('#toBottom').hidden = stick || !cur || !cur.messages.length; }, { passive: true });
 $('#input').addEventListener('input', () => { grow(); updateSend(); });
 $('#input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229 && S.enterSend) { e.preventDefault(); submit(); } });
 $('#input').addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])]; if (f.length) { e.preventDefault(); addFiles(f); } });
 $('#attach').onclick = () => $('#file').click();
 $('#file').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
 $('#searchToggle').onclick = () => { S.search = !S.search; saveS(); $('#searchToggle').setAttribute('aria-pressed', S.search); };
+$('#gemSel').onchange = e => { if (cur) { cur.gem = e.target.value; persist(cur); } else { S.gem = e.target.value; saveS(); } };
+$('#imgToggle').onclick = () => { S.imgMode = !S.imgMode; saveS(); applyImgMode(); };
+$('#imgModel').onchange = e => { S.imgModel = e.target.value; saveS(); };
+$('#aspect').onchange = e => { S.aspect = e.target.value; saveS(); };
 $('#model').onchange = e => { S.model = e.target.value; saveS(); thinkSelect(); };
 $('#think').onchange = e => { if (e.target.value) S.think[S.model] = e.target.value; else delete S.think[S.model]; saveS(); };
 
@@ -848,9 +1064,9 @@ async function loadModels(quiet) {
 }
 function openSettings() {
   $('#provider').value = S.provider; $('#vkey').value = S.vkey; $('#vproject').value = S.vproject; $('#vlocation').value = S.vlocation; showProvider();
-  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system;
+  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; gemEditorFill();
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
-  $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
+  $('#fx').value = S.fx; $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
   $('#modal').hidden = false; closeDrawer(); fit(); $('.sheet .body').scrollTop = 0;
 }
 function closeSettings() { $('#modal').hidden = true; if (cur === null || !cur.messages.length) renderChat(); }
@@ -876,8 +1092,29 @@ $('#refreshModels').onclick = () => loadModels(false);
 $('#builtinModels').onclick = () => { if (isVertex()) { S.vmodels = null; if (!VERTEX_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); return toast('已改用內建清單'); } S.models = FALLBACK_MODELS; S.modelsAt = Date.now(); if (!S.models.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); toast('已改用內建清單'); };
 $('#customModel').onchange = e => { S.customModel = e.target.value.trim(); if (S.customModel) S.model = S.customModel; saveS(); modelOptions(); };
 $('#system').onchange = e => { S.system = e.target.value; saveS(); };
+let gemEditing = '';
+function gemEditorFill() {
+  const sel = $('#gemEdit'); sel.innerHTML = '';
+  S.gems.forEach(g => { const o = h('option', '', g.name); o.value = g.id; sel.append(o); });
+  if (!gemOf(gemEditing)) gemEditing = S.gems[0] ? S.gems[0].id : '';
+  sel.value = gemEditing;
+  const g = gemOf(gemEditing);
+  $('#gemName').value = g ? g.name : ''; $('#gemPrompt').value = g ? g.prompt : '';
+  $('#gemName').disabled = $('#gemPrompt').disabled = $('#gemDel').disabled = !g;
+}
+$('#gemEdit').onchange = e => { gemEditing = e.target.value; gemEditorFill(); };
+$('#gemName').onchange = e => { const g = gemOf(gemEditing); if (!g) return; g.name = e.target.value.trim() || '未命名'; saveS(); gemEditorFill(); gemOptions(); };
+$('#gemPrompt').onchange = e => { const g = gemOf(gemEditing); if (!g) return; g.prompt = e.target.value; saveS(); };
+$('#gemAdd').onclick = () => { const g = { id: uid(), name: '新的 Skill', prompt: '' }; S.gems.push(g); gemEditing = g.id; saveS(); gemEditorFill(); gemOptions(); $('#gemName').focus(); $('#gemName').select(); };
+$('#gemDel').onclick = e => {
+  const b = e.currentTarget;
+  if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '確定刪除'; setTimeout(() => { b.dataset.sure = ''; b.textContent = '刪除'; }, 3000); return; }
+  S.gems = S.gems.filter(g => g.id !== gemEditing); if (S.gem === gemEditing) S.gem = '';
+  b.dataset.sure = ''; b.textContent = '刪除'; saveS(); gemEditorFill(); gemOptions();
+};
 $('#useTemp').onchange = e => { S.useTemp = e.target.checked; $('#temp').disabled = !S.useTemp; saveS(); };
 $('#temp').oninput = e => { S.temp = Number(e.target.value); $('#tempVal').textContent = S.temp.toFixed(1); saveS(); };
+$('#fx').onchange = e => { const v = parseFloat(e.target.value); if (v > 0) S.fx = v; e.target.value = S.fx; saveS(); renderChat(); };
 $('#thoughts').onchange = e => { S.thoughts = e.target.checked; saveS(); };
 $('#enterSend').onchange = e => { S.enterSend = e.target.checked; saveS(); };
 $('#theme').onchange = e => { S.theme = e.target.value; saveS(); applyTheme(); };
@@ -905,13 +1142,13 @@ $('#clearAll').onclick = async e => {
 
 /* ---------- 螢幕鍵盤：讓版面跟著可視區域縮放 ---------- */
 const vv = window.visualViewport;
-function fit() { document.documentElement.style.setProperty('--vh', (vv ? vv.height : window.innerHeight) + 'px'); if (vv) window.scrollTo(0, 0); if (stick) toBottom(); }
+function fit() { const vh = vv ? vv.height : window.innerHeight; document.documentElement.style.setProperty('--vh', vh + 'px'); $('#app').classList.toggle('compact', vh < 560); if (vv) window.scrollTo(0, 0); if (stick) toBottom(); }
 if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
 window.addEventListener('resize', fit);
 
 /* ---------- 啟動 ---------- */
 (async () => {
-  applyTheme(); applySide(); fit(); modelOptions();
+  applyTheme(); applySide(); fit(); modelOptions(); applyImgMode();
   $('#searchToggle').setAttribute('aria-pressed', S.search);
   await DB.open();
   chats = await DB.all();
