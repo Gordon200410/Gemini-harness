@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gemini">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131314" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://generativelanguage.googleapis.com" crossorigin>
+<script>try { var t = (JSON.parse(localStorage.getItem('gh.settings') || '{}').theme) || 'auto'; if (t !== 'auto') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
 <title>Gemini 對話台</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <style>
@@ -106,6 +116,13 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 .msg.model{min-width:0}
 .md{overflow-wrap:anywhere}
 .md>:first-child{margin-top:0}.md>:last-child{margin-bottom:0}
+.blk{display:contents}
+.md>.blk:first-child>:first-child{margin-top:0}.md>.blk:last-child>:last-child{margin-bottom:0}
+.msg:not(:nth-last-child(-n+6)){content-visibility:auto;contain-intrinsic-size:auto 320px}
+.thinking{display:inline-flex;align-items:center;gap:10px;color:var(--muted);font-size:14.5px}
+.vers{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;color:var(--muted)}
+.vers button{min-width:30px}
+.vers button:disabled{opacity:.3}
 .md p{margin:.7em 0}
 .md h1,.md h2,.md h3,.md h4{line-height:1.35;margin:1.3em 0 .5em;text-wrap:balance}
 .md h1{font-size:1.4em}.md h2{font-size:1.22em}.md h3{font-size:1.08em}.md h4{font-size:1em}
@@ -319,7 +336,8 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       <div class="f"><label for="fx">費用換算匯率（1 美元兌新台幣）</label>
         <input id="fx" type="text" inputmode="decimal" style="max-width:160px">
         <small>估價依 Gemini API 公開牌價計算，不含快取折扣、Google 搜尋費用與免費額度，實際金額以帳單為準。</small></div>
-      <div class="f"><div class="row"><input type="checkbox" id="enterSend"><label for="enterSend">按 Enter 送出（Shift + Enter 換行）</label></div></div>
+      <div class="f"><div class="row"><input type="checkbox" id="enterSend"><label for="enterSend">按 Enter 送出（Shift + Enter 換行）</label></div>
+        <small>接實體鍵盤時：⌘ + Enter 送出、⌘ + Shift + O 新對話、⌘ + K 搜尋對話、Esc 停止回覆、輸入框空白時按 ↑ 編輯上一則提問。</small></div>
       <div class="f"><label for="theme">外觀</label>
         <select id="theme"><option value="auto">跟隨系統</option><option value="light">淺色</option><option value="dark">深色</option></select></div>
       <div class="f"><span class="lab">資料</span>
@@ -456,6 +474,34 @@ function renderMD(src) {
   });
 }
 
+/* 串流時把回覆切成區塊，只重畫還在變動的最後一塊；已完成的區塊保留原本的 DOM */
+function splitBlocks(src) {
+  if (!window.marked || !marked.lexer) return [src];
+  let toks; try { toks = marked.lexer(src); } catch { return [src]; }
+  const out = [];
+  for (const t of toks) { if (!t.raw) continue; if (t.type === 'space' && out.length) out[out.length - 1] += t.raw; else out.push(t.raw); }
+  // 跨空行的 $$ 公式會被切開，合回同一塊
+  for (let i = 0; i < out.length - 1; i++) if (((out[i].match(/\$\$/g) || []).length) % 2) { out[i] += out[i + 1]; out.splice(i + 1, 1); i--; }
+  return out.length ? out : [src];
+}
+function repairTail(src) {
+  // 補上串流途中未閉合的程式碼區塊，避免整段被當成程式碼又跳回來
+  const fences = (src.match(/^\s*(```|~~~)/gm) || []).length;
+  return fences % 2 ? src + '\n```' : src;
+}
+function renderBlocks(md, text, final) {
+  const blocks = splitBlocks(text), kids = md._blk || (md._blk = []);
+  if (md.firstChild && !md.firstChild.classList?.contains('blk')) { md.innerHTML = ''; kids.length = 0; }
+  blocks.forEach((raw, i) => {
+    const last = i === blocks.length - 1, key = raw + (last && !final ? '\u0000' : '');
+    let k = kids[i];
+    if (!k) { k = kids[i] = { el: h('div', 'blk'), key: null }; md.append(k.el); }
+    if (k.key === key) return;
+    k.key = key; k.el.innerHTML = renderMD(last && !final ? repairTail(raw) : raw); decorate(k.el, final || !last);
+  });
+  while (kids.length > blocks.length) kids.pop().el.remove();
+}
+
 function decorate(root, final) {
   root.querySelectorAll('table').forEach(t => { const w = h('div', 'tablewrap'); t.replaceWith(w); w.append(t); });
   root.querySelectorAll('pre').forEach(pre => {
@@ -551,7 +597,7 @@ function fmtMoney(usd) {
 }
 function chatCost(c) {
   let usd = 0, any = false, unknown = false;
-  for (const m of (c && c.messages) || []) { const k = costOf(m); if (!k) continue; if (k.usd == null) unknown = true; else { usd += k.usd; any = true; } }
+  for (const m0 of (c && c.messages) || []) for (const m of [m0].concat(m0.alts || [])) { const k = costOf(m); if (!k) continue; if (k.usd == null) unknown = true; else { usd += k.usd; any = true; } }
   return any ? { usd, unknown } : null;
 }
 function showTotal() {
@@ -696,8 +742,14 @@ function modelEl(m) {
     if (m.thoughts) th.lastChild.innerHTML = renderMD(m.thoughts);
     gens.hidden = !(m.images && m.images.length);
     if (!gens.hidden && gens.childElementCount !== m.images.length) { gens.innerHTML = ''; m.images.forEach(g => { const i = new Image(); i.src = 'data:' + g.mime + ';base64,' + g.data; i.alt = '生成的圖片'; i.dataset.act = 'viewgen'; i.tabIndex = 0; i.setAttribute('role', 'button'); gens.append(i); }); }
-    if (m.text) { md.innerHTML = renderMD(m.text); decorate(md, final); }
-    else md.innerHTML = m.streaming ? '<span class="dots" aria-label="產生中"><i></i><i></i><i></i></span>' : '';
+    if (m.text) renderBlocks(md, m.text, final);
+    else {
+      md._blk = null;
+      if (m.streaming) {
+        const sec = Math.floor((Date.now() - (m.at || Date.now())) / 1000);
+        md.innerHTML = '<span class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>' + (m.thoughts ? '思考中' : '正在回覆') + (sec >= 2 ? ' · ' + sec + ' 秒' : '') + '</span></span>';
+      } else md.innerHTML = '';
+    }
     foot.innerHTML = '';
     if (!final) return;
     if (m.sources && m.sources.length) {
@@ -713,8 +765,16 @@ function modelEl(m) {
     if (IMG_ENABLED && m.images && m.images.length) { const e = h('button', '', '修改這張圖'); e.dataset.act = 'editimg'; acts.append(e); }
     const isLast = cur && cur.messages[cur.messages.length - 1] === m;
     if (isLast) { const r = h('button', '', m.error && !m.text ? '重試' : '重新產生'); r.dataset.act = 'regen'; acts.append(r); }
+    if (m.alts && m.alts.length) {
+      const n = m.alts.length + 1, i = m.ver == null ? n - 1 : m.ver, v = h('span', 'vers');
+      const pv = h('button', '', '‹'), nx = h('button', '', '›');
+      pv.dataset.act = 'ver'; pv.dataset.d = -1; pv.disabled = i === 0 || !isLast; pv.setAttribute('aria-label', '上一個版本');
+      nx.dataset.act = 'ver'; nx.dataset.d = 1; nx.disabled = i === n - 1 || !isLast; nx.setAttribute('aria-label', '下一個版本');
+      v.append(pv, h('span', '', (i + 1) + ' / ' + n), nx); acts.append(v);
+    }
     const u = m.usage, bits = [];
     if (m.model) bits.push(m.model);
+    if (m.thinkMs >= 1000) bits.push('思考 ' + Math.round(m.thinkMs / 1000) + ' 秒');
     const k = costOf(m);
     if (k) bits.push('輸入 ' + fmtTok(k.inTok) + ' · 輸出 ' + fmtTok(k.outTok), k.usd == null ? '無此模型價格' : fmtMoney(k.usd));
     if (bits.length) acts.append(h('span', 'meta', bits.join(' · ')));
@@ -753,6 +813,23 @@ function renderAtts() {
     else c.append(h('span', '', a.name));
     const x = h('button', '', '✕'); x.setAttribute('aria-label', '移除 ' + a.name); x.onclick = () => { pending.splice(i, 1); renderAtts(); updateSend(); }; c.append(x); r.append(c); });
 }
+
+function startEdit(m) {
+  if (busy) return toast('請先停止目前的回覆');
+  editing = m.id; pending = (m.atts || []).slice(); $('#input').value = m.text; $('#banner').hidden = false;
+  renderAtts(); grow(); updateSend(); $('#input').focus();
+}
+
+/* ---------- 草稿自動保存 ---------- */
+const draftKey = () => 'gh.draft.' + (cur ? cur.id : 'new');
+let draftT = 0;
+function saveDraft(now) {
+  clearTimeout(draftT);
+  const k = draftKey(), v = $('#input').value, go = () => { try { if (v.trim() && !editing) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch {} };
+  if (now) go(); else draftT = setTimeout(go, 300);
+}
+function loadDraft() { let v = ''; try { v = localStorage.getItem(draftKey()) || ''; } catch {} $('#input').value = v; grow(); updateSend(); }
+function clearDraft(id) { clearTimeout(draftT); try { localStorage.removeItem('gh.draft.' + id); } catch {} }
 
 /* ---------- 程式碼預覽與下載 ---------- */
 function openPreview(code) {
@@ -918,13 +995,14 @@ async function run(chat, msg) {
   const ctrl = new AbortController();
   busy = { ctrl, msg }; msg.streaming = true; msg.model = (isVertex() ? 'Vertex · ' : '') + S.model; msg.mid = S.model; msg.at = Date.now(); updateSend();
   let raf = 0;
-  const paint = () => { if (!raf) raf = setTimeout(() => { raf = 0; refreshMsg(msg); }, 70); };
+  const paint = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; refreshMsg(msg); }); };
+  const tick = setInterval(() => { if (!msg.text) refreshMsg(msg); }, 1000);
   const onChunk = j => {
     if (j.error) { const e = new Error(j.error.message || ''); e.status = j.error.code; throw e; }
     if (j.promptFeedback && j.promptFeedback.blockReason) msg.note = '提示內容被安全機制擋下（' + j.promptFeedback.blockReason + '）。';
     const c = (j.candidates || [])[0];
     if (c) {
-      for (const p of (c.content && c.content.parts) || []) { if (typeof p.text !== 'string') continue; if (p.thought) msg.thoughts = (msg.thoughts || '') + p.text; else msg.text += p.text; }
+      for (const p of (c.content && c.content.parts) || []) { if (typeof p.text !== 'string') continue; if (p.thought) msg.thoughts = (msg.thoughts || '') + p.text; else { if (!msg.text && p.text && msg.thinkMs == null) msg.thinkMs = Date.now() - msg.at; msg.text += p.text; } }
       const g = c.groundingMetadata;
       if (g && g.groundingChunks) { const seen = new Set(), src = []; for (const k of g.groundingChunks) { const w = k.web; if (w && w.uri && !seen.has(w.uri)) { seen.add(w.uri); src.push({ uri: w.uri, title: w.title || '' }); } } if (src.length) msg.sources = src; }
       if (c.finishReason && c.finishReason !== 'STOP') msg.note = c.finishReason === 'MAX_TOKENS' ? '回覆達到長度上限而中斷。' : '回覆提前結束（' + c.finishReason + '）。';
@@ -942,7 +1020,7 @@ async function run(chat, msg) {
   } catch (e) {
     if (e.name === 'AbortError') msg.note = '已停止。'; else msg.error = explain(e);
   }
-  clearTimeout(raf); delete msg.streaming; busy = null; updateSend();
+  cancelAnimationFrame(raf); clearInterval(tick); delete msg.streaming; busy = null; updateSend();
   refreshMsg(msg); if (cur === chat) showTotal(); await persist(chat); renderList();
   if (chat.auto && msg.text) autoTitle(chat);
 }
@@ -963,8 +1041,8 @@ async function autoTitle(chat) {
 }
 
 /* ---------- 動作 ---------- */
-function newChat() { stopSpeak(); if (busy) busy.ctrl.abort(); cur = null; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); if (!narrow()) $('#input').focus(); }
-function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; stopSpeak(); cur = c; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); }
+function newChat() { saveDraft(true); stopSpeak(); if (busy) busy.ctrl.abort(); cur = null; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); if (!narrow()) $('#input').focus(); }
+function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; saveDraft(true); stopSpeak(); cur = c; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); }
 
 async function submit() {
   if (busy) { busy.ctrl.abort(); return; }
@@ -976,14 +1054,33 @@ async function submit() {
   const u = { id: uid(), role: 'user', text, atts: pending };
   const m = { id: uid(), role: 'model', text: '' }; if (S.imgMode) m.img = true;
   cur.messages.push(u, m);
-  pending = []; inp.value = ''; grow(); renderAtts();
+  pending = []; inp.value = ''; grow(); renderAtts(); clearDraft('new'); clearDraft(cur.id);
   renderChat(); renderList();
   await run(cur, m);
 }
+function versionsOf(m) {
+  // 回傳這則訊息所有版本（含目前顯示的那一版），依時間排序
+  const list = (m.alts || []).slice(), here = snap(m);
+  if (m.ver == null) list.push(here); else list.splice(m.ver, 0, here);
+  return list;
+}
+function showVersion(m, d) {
+  const all = versionsOf(m), i = (m.ver == null ? all.length - 1 : m.ver) + d;
+  if (i < 0 || i >= all.length) return;
+  VKEYS.forEach(k => delete m[k]); Object.assign(m, all[i]); if (!m.text) m.text = '';
+  m.alts = all.filter((_, j) => j !== i); m.ver = i === all.length - 1 ? null : i;
+  const el = els.get(m.id); if (el) { const md = el.querySelector(':scope > .md'); md._blk = null; md.innerHTML = ''; el._update(); }
+  persist(cur); showTotal();
+}
+const VKEYS = ['text','thoughts','sources','usage','note','error','model','mid','at','thinkMs','images'];
+const snap = m => { const o = {}; VKEYS.forEach(k => { if (m[k] != null) o[k] = m[k]; }); return o; };
 async function regen() {
   if (busy || !cur) return;
   const last = cur.messages[cur.messages.length - 1]; if (!last || last.role !== 'model') return;
   const m = { id: uid(), role: 'model', text: '' }; if (last.img) m.img = true;
+  // 保留舊版本：只保留有內容的版本，最多 10 個
+  const prev = versionsOf(last).filter(v => v.text || (v.images && v.images.length));
+  if (prev.length) m.alts = prev.slice(-9);
   cur.messages[cur.messages.length - 1] = m;
   renderChat(); await run(cur, m);
 }
@@ -1005,11 +1102,8 @@ $('#msgs').addEventListener('click', e => {
   if (act === 'copy') copyText(m.text);
   else if (act === 'speak') speak(m, b);
   else if (act === 'regen') regen();
-  else if (act === 'edit') {
-    if (busy) return toast('請先停止目前的回覆');
-    editing = m.id; pending = (m.atts || []).slice(); $('#input').value = m.text; $('#banner').hidden = false;
-    renderAtts(); grow(); updateSend(); $('#input').focus();
-  }
+  else if (act === 'ver') showVersion(m, Number(b.dataset.d));
+  else if (act === 'edit') startEdit(m);
 });
 $('#cancelEdit').onclick = () => { editing = null; pending = []; $('#input').value = ''; $('#banner').hidden = true; renderAtts(); grow(); updateSend(); };
 
@@ -1039,8 +1133,15 @@ $('#scrim').onclick = closeDrawer;
 $('#send').onclick = submit;
 $('#toBottom').onclick = () => { stick = true; toBottom(); };
 $('#scroll').addEventListener('scroll', () => { const s = $('#scroll'); stick = s.scrollHeight - s.scrollTop - s.clientHeight < 60; $('#toBottom').hidden = stick || !cur || !cur.messages.length; }, { passive: true });
-$('#input').addEventListener('input', () => { grow(); updateSend(); });
-$('#input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229 && S.enterSend) { e.preventDefault(); submit(); } });
+$('#input').addEventListener('input', () => { grow(); updateSend(); saveDraft(); });
+$('#input').addEventListener('keydown', e => {
+  if (e.isComposing || e.keyCode === 229) return;
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); return; }
+  if (e.key === 'Enter' && !e.shiftKey && S.enterSend) { e.preventDefault(); submit(); return; }
+  if (e.key === 'ArrowUp' && !e.target.value && !pending.length && cur) {
+    const u = cur.messages.slice().reverse().find(x => x.role === 'user'); if (u) { e.preventDefault(); startEdit(u); }
+  }
+});
 $('#input').addEventListener('paste', e => { const f = [...(e.clipboardData && e.clipboardData.files || [])]; if (f.length) { e.preventDefault(); addFiles(f); } });
 $('#attach').onclick = () => $('#file').click();
 $('#file').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
@@ -1184,7 +1285,15 @@ function enhance(sel, dir) {
   };
 }
 document.addEventListener('pointerdown', e => { if (openPick && !e.target.closest('.pick')) closePick(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closePick(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && openPick) { closePick(); return; }
+  const overlay = !$('#modal').hidden || !$('#viewer').hidden || !$('#preview').hidden;
+  const mod = e.metaKey || e.ctrlKey, k = (e.key || '').toLowerCase();
+  if (mod && e.shiftKey && k === 'o') { e.preventDefault(); if (!overlay) newChat(); return; }
+  if (mod && !e.shiftKey && k === 'k') { e.preventDefault(); if (overlay) return; if (narrow()) $('#app').classList.add('drawer'); else if (!S.sideOpen) { S.sideOpen = true; saveS(); applySide(); } $('#search').focus(); return; }
+  if (e.key === 'Escape' && !overlay && busy) { e.preventDefault(); busy.ctrl.abort(); return; }
+  if (e.key === 'Escape' && !overlay && editing) { $('#cancelEdit').click(); }
+});
 
 /* ---------- 螢幕鍵盤：讓版面跟著可視區域縮放 ---------- */
 const vv = window.visualViewport;
@@ -1200,7 +1309,8 @@ window.addEventListener('resize', fit);
   await DB.open();
   chats = await DB.all();
   cur = chats.find(c => c.id === S.last) || null;
-  renderList(); renderChat(); updateSend();
+  renderList(); renderChat(); loadDraft();
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && /\.github\.io$/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});
   if (!isVertex() && (S.key1 || S.key2) && Date.now() - S.modelsAt > 864e5) loadModels(true);
 })();
 })();
