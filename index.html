@@ -244,12 +244,27 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
   <div class="sheet" role="dialog" aria-label="設定">
     <div class="top"><h2>設定</h2><button class="icon" id="closeSettings" aria-label="關閉"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <div class="body">
+      <div class="f"><label for="provider">服務</label>
+        <select id="provider"><option value="studio">Gemini API（AI Studio 金鑰）</option><option value="vertex">Vertex AI（Google Cloud 金鑰）</option></select>
+        <small id="provHint"></small></div>
+      <div id="vertexBox" hidden style="display:flex;flex-direction:column;gap:18px">
+        <div class="f"><label for="vkey">Google Cloud API 金鑰</label>
+          <input id="vkey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="貼上在 Cloud Console 建立的金鑰">
+          <small>金鑰只存在這台裝置的瀏覽器，直接送往 Google Cloud。</small></div>
+        <div class="f"><label for="vproject">專案 ID（選填）</label>
+          <input id="vproject" type="text" autocapitalize="off" spellcheck="false" placeholder="例如 gen-lang-client-0792906431">
+          <small>留空時用不含專案的網址；若回覆 404 或權限錯誤，填入專案 ID 再試。</small></div>
+        <div class="f"><label for="vlocation">區域</label>
+          <input id="vlocation" type="text" autocapitalize="off" spellcheck="false" placeholder="global"></div>
+      </div>
+      <div id="studioBox" style="display:flex;flex-direction:column;gap:18px">
       <div class="f"><label for="key1">Gemini API 金鑰</label>
         <div class="row"><input id="key1" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="貼上 AI Studio 的金鑰" style="flex:1"><button class="btn" id="showKey">顯示</button></div>
         <small>金鑰只存在這台裝置的瀏覽器，直接送往 Google。<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">到 AI Studio 取得金鑰</a></small></div>
       <div class="f"><label for="key2">備用金鑰（選填）</label>
         <input id="key2" type="password" autocomplete="off" autocapitalize="off" spellcheck="false">
         <small>主要金鑰達到用量上限時自動改用。</small></div>
+      </div>
       <div class="f"><span class="lab">模型清單</span>
         <div class="row"><button class="btn" id="refreshModels">從 Google 重新載入</button><button class="btn" id="builtinModels">用內建清單</button><small id="modelCount"></small></div>
         <input id="customModel" type="text" autocapitalize="off" spellcheck="false" placeholder="自訂模型 ID，例如 gemini-3.8-flash"></div>
@@ -318,10 +333,21 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, thoughts:false, think:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, thoughts:false, think:{}, provider:'studio', vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
+/* 兩種服務：studio = Gemini API（AI Studio 金鑰）；vertex = Google Cloud 的 Vertex AI / Agent Platform 金鑰 */
+const isVertex = () => S.provider === 'vertex';
+const VERTEX_MODELS = FALLBACK_MODELS.filter(m => !/^gemma/.test(m.id));
+const activeKeys = () => (isVertex() ? [S.vkey] : [S.key1, S.key2]).filter(Boolean);
+const modelList = () => isVertex() ? (S.vmodels || VERTEX_MODELS) : S.models;
+function endpoint(model, method, key) {
+  if (!isVertex()) return { url: API + '/models/' + model + ':' + method + (method === 'streamGenerateContent' ? '?alt=sse' : ''), headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key } };
+  const loc = (S.vlocation || 'global').trim(), host = loc === 'global' ? 'https://aiplatform.googleapis.com' : 'https://' + loc + '-aiplatform.googleapis.com';
+  const scope = S.vproject.trim() ? '/v1/projects/' + encodeURIComponent(S.vproject.trim()) + '/locations/' + encodeURIComponent(loc) : '/v1';
+  return { url: host + scope + '/publishers/google/models/' + model + ':' + method + '?key=' + encodeURIComponent(key) + (method === 'streamGenerateContent' ? '&alt=sse' : ''), headers: { 'Content-Type': 'application/json' } };
+}
 
 const DB = {
   db: null,
@@ -422,13 +448,13 @@ function renderList() {
 
 function modelOptions() {
   const sel = $('#model'); sel.innerHTML = '';
-  const list = S.models.slice();
+  const list = modelList().slice();
   if (S.customModel && !list.some(m => m.id === S.customModel)) list.unshift({ id: S.customModel, name: S.customModel });
   if (!list.some(m => m.id === S.model)) list.unshift({ id: S.model, name: S.model });
   for (const m of list) { const o = h('option', '', m.name); o.value = m.id; sel.append(o); }
   sel.value = S.model;
   thinkSelect();
-  $('#modelCount').textContent = '目前 ' + S.models.length + ' 個模型';
+  $('#modelCount').textContent = '目前 ' + modelList().length + ' 個模型';
 }
 
 /* 思考程度：依 Google 文件的各模型支援表（2026-11）。回傳 null 表示不提供選項 */
@@ -458,7 +484,7 @@ function welcome() {
   const w = h('div', 'welcome');
   const hr = new Date().getHours();
   w.append(h('h1', '', (hr < 5 ? '夜深了' : hr < 11 ? '早安' : hr < 18 ? '午安' : '晚安') + '，今天想聊什麼？'));
-  if (!S.key1 && !S.key2) {
+  if (!activeKeys().length) {
     w.append(h('p', '', '先填入 Gemini API 金鑰就能開始。金鑰只會存在這台裝置。'));
     const b = h('button', 'btn primary', '填入 API 金鑰'); b.style.alignSelf = 'flex-start'; b.onclick = openSettings; w.append(b);
   } else {
@@ -632,15 +658,15 @@ function explain(e) {
   const s = e.status, raw = e.message || '';
   let t = s === 429 ? '已達用量上限，請稍後再試或換一個模型。'
     : s === 404 ? '找不到這個模型，請到設定重新載入模型清單。'
-    : s === 403 || /API key/i.test(raw) ? 'API 金鑰無效或沒有權限，請到設定檢查金鑰。'
+    : s === 401 || s === 403 || /API key/i.test(raw) ? (isVertex() ? '金鑰無效或權限不足。請確認已啟用 Agent Platform（Vertex AI）API、金鑰綁定的服務帳戶有 aiplatform.user 角色，且金鑰的 API 限制允許該 API。' : 'API 金鑰無效或沒有權限，請到設定檢查金鑰。')
     : s === 503 || s === 500 ? '模型目前忙碌，請稍後重試。'
     : s === 400 ? '請求被拒絕。若設定了思考程度、「Google 搜尋」或「顯示思考摘要」，這個模型可能不支援，請改回預設或關閉後重試。'
-    : !s ? '連線失敗，請檢查網路。' : '發生錯誤。';
+    : !s ? (isVertex() ? '連線失敗。可能是網路問題，或 Vertex AI 不接受從瀏覽器直接呼叫。' : '連線失敗，請檢查網路。') : '發生錯誤。';
   return t + (raw ? '（' + (s ? s + '：' : '') + raw.slice(0, 300) + '）' : '');
 }
 async function stream(key, model, body, signal, onChunk) {
-  const res = await fetch(API + '/models/' + model + ':streamGenerateContent?alt=sse', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(body), signal });
+  const ep = endpoint(model, 'streamGenerateContent', key);
+  const res = await fetch(ep.url, { method: 'POST', headers: ep.headers, body: JSON.stringify(body), signal });
   if (!res.ok) { let msg = ''; try { msg = (await res.json()).error.message; } catch {} const e = new Error(msg); e.status = res.status; throw e; }
   const reader = res.body.getReader(), dec = new TextDecoder(); let buf = '';
   for (;;) {
@@ -657,7 +683,7 @@ async function stream(key, model, body, signal, onChunk) {
 }
 
 async function run(chat, msg) {
-  const keys = [S.key1, S.key2].filter(Boolean);
+  const keys = activeKeys();
   const idx = chat.messages.indexOf(msg);
   const body = { contents: toContents(chat.messages.slice(0, idx)) };
   if (S.system.trim()) body.systemInstruction = { parts: [{ text: S.system.trim() }] };
@@ -671,7 +697,7 @@ async function run(chat, msg) {
   if (S.search) body.tools = [{ googleSearch: {} }];
 
   const ctrl = new AbortController();
-  busy = { ctrl, msg }; msg.streaming = true; msg.model = S.model; updateSend();
+  busy = { ctrl, msg }; msg.streaming = true; msg.model = (isVertex() ? 'Vertex · ' : '') + S.model; updateSend();
   let raf = 0;
   const paint = () => { if (!raf) raf = setTimeout(() => { raf = 0; refreshMsg(msg); }, 70); };
   const onChunk = j => {
@@ -704,10 +730,11 @@ async function run(chat, msg) {
 
 async function autoTitle(chat) {
   delete chat.auto;
-  const key = S.key1 || S.key2, first = chat.messages.find(m => m.role === 'user');
+  const key = activeKeys()[0], first = chat.messages.find(m => m.role === 'user');
   if (!key || !first || !first.text) return;
   try {
-    const r = await fetch(API + '/models/' + S.model + ':generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    const ep = endpoint(S.model, 'generateContent', key);
+    const r = await fetch(ep.url, { method: 'POST', headers: ep.headers,
       body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: '請為以下對話開頭取一個不超過 12 個字的繁體中文標題。只輸出標題本身，不要引號、標點或說明。\n\n' + first.text.slice(0, 600) }] }] }) });
     if (!r.ok) return;
     const j = await r.json();
@@ -724,7 +751,7 @@ async function submit() {
   if (busy) { busy.ctrl.abort(); return; }
   const inp = $('#input'), text = inp.value.trim();
   if (!text && !pending.length) return;
-  if (!S.key1 && !S.key2) { openSettings(); toast('請先填入 API 金鑰'); return; }
+  if (!activeKeys().length) { openSettings(); toast('請先填入 API 金鑰'); return; }
   if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true }; chats.push(cur); S.last = cur.id; saveS(); }
   if (editing) { const i = cur.messages.findIndex(m => m.id === editing); if (i >= 0) cur.messages.length = i; editing = null; $('#banner').hidden = true; }
   const u = { id: uid(), role: 'user', text, atts: pending };
@@ -795,7 +822,19 @@ $('#think').onchange = e => { if (e.target.value) S.think[S.model] = e.target.va
 
 /* ---------- 設定 ---------- */
 async function loadModels(quiet) {
-  const key = S.key1 || S.key2; if (!key) { if (!quiet) toast('請先填入 API 金鑰'); return; }
+  const key = activeKeys()[0]; if (!key) { if (!quiet) toast('請先填入 API 金鑰'); return; }
+  if (isVertex()) {
+    try {
+      const r = await fetch('https://aiplatform.googleapis.com/v1beta1/publishers/google/models?pageSize=500&key=' + encodeURIComponent(key));
+      if (!r.ok) throw Object.assign(new Error(''), { status: r.status });
+      const list = ((await r.json()).publisherModels || []).map(m => { const id = m.name.split('/').pop(); return { id, name: id }; })
+        .filter(m => /^gemini-/.test(m.id) && isChat(m.id)).sort((x, y) => rank(y.id) - rank(x.id) || x.id.localeCompare(y.id));
+      if (!list.length) throw new Error('');
+      S.vmodels = list; if (!list.some(m => m.id === S.model) && S.model !== S.customModel) S.model = (list.find(m => m.id === 'gemini-3.8-flash') || list[0]).id;
+      saveS(); modelOptions(); if (!quiet) toast('已載入 ' + list.length + ' 個模型');
+    } catch { if (!quiet) toast('Vertex 無法列出模型，沿用內建清單'); }
+    return;
+  }
   try {
     const r = await fetch(API + '/models?pageSize=1000', { headers: { 'x-goog-api-key': key } });
     if (!r.ok) { let msg = ''; try { msg = (await r.json()).error.message; } catch {} throw Object.assign(new Error(msg), { status: r.status }); }
@@ -808,6 +847,7 @@ async function loadModels(quiet) {
   } catch (e) { if (!quiet) toast(explain(e).slice(0, 60)); }
 }
 function openSettings() {
+  $('#provider').value = S.provider; $('#vkey').value = S.vkey; $('#vproject').value = S.vproject; $('#vlocation').value = S.vlocation; showProvider();
   $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system;
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
   $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
@@ -816,11 +856,24 @@ function openSettings() {
 function closeSettings() { $('#modal').hidden = true; if (cur === null || !cur.messages.length) renderChat(); }
 $('#openSettings').onclick = openSettings; $('#closeSettings').onclick = closeSettings;
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeSettings(); });
+function showProvider() {
+  const v = isVertex(); $('#vertexBox').hidden = !v; $('#studioBox').hidden = v;
+  $('#provHint').textContent = v ? '用量計入 Google Cloud 帳單，可使用 GCP 試用額度。' : '用量計入 AI Studio，GCP 試用額度不適用。';
+}
+$('#provider').onchange = e => {
+  S.modelBy[S.provider] = S.model; S.provider = e.target.value;
+  S.model = S.modelBy[S.provider] || 'gemini-3.8-flash';
+  if (!modelList().some(m => m.id === S.model) && S.model !== S.customModel) S.model = (modelList().find(m => m.id === 'gemini-3.8-flash') || modelList()[0]).id;
+  saveS(); showProvider(); modelOptions();
+};
+$('#vkey').onchange = e => { S.vkey = e.target.value.trim(); saveS(); };
+$('#vproject').onchange = e => { S.vproject = e.target.value.trim(); saveS(); };
+$('#vlocation').onchange = e => { S.vlocation = e.target.value.trim() || 'global'; e.target.value = S.vlocation; saveS(); };
 $('#key1').onchange = e => { S.key1 = e.target.value.trim(); saveS(); loadModels(true); };
 $('#key2').onchange = e => { S.key2 = e.target.value.trim(); saveS(); };
-$('#showKey').onclick = () => { const k = $('#key1'), on = k.type === 'password'; k.type = $('#key2').type = on ? 'text' : 'password'; $('#showKey').textContent = on ? '隱藏' : '顯示'; };
+$('#showKey').onclick = () => { const k = $('#key1'), on = k.type === 'password'; k.type = $('#key2').type = $('#vkey').type = on ? 'text' : 'password'; $('#showKey').textContent = on ? '隱藏' : '顯示'; };
 $('#refreshModels').onclick = () => loadModels(false);
-$('#builtinModels').onclick = () => { S.models = FALLBACK_MODELS; S.modelsAt = Date.now(); if (!S.models.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); toast('已改用內建清單'); };
+$('#builtinModels').onclick = () => { if (isVertex()) { S.vmodels = null; if (!VERTEX_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); return toast('已改用內建清單'); } S.models = FALLBACK_MODELS; S.modelsAt = Date.now(); if (!S.models.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); toast('已改用內建清單'); };
 $('#customModel').onchange = e => { S.customModel = e.target.value.trim(); if (S.customModel) S.model = S.customModel; saveS(); modelOptions(); };
 $('#system').onchange = e => { S.system = e.target.value; saveS(); };
 $('#useTemp').onchange = e => { S.useTemp = e.target.checked; $('#temp').disabled = !S.useTemp; saveS(); };
@@ -864,7 +917,7 @@ window.addEventListener('resize', fit);
   chats = await DB.all();
   cur = chats.find(c => c.id === S.last) || null;
   renderList(); renderChat(); updateSend();
-  if ((S.key1 || S.key2) && Date.now() - S.modelsAt > 864e5) loadModels(true);
+  if (!isVertex() && (S.key1 || S.key2) && Date.now() - S.modelsAt > 864e5) loadModels(true);
 })();
 })();
 </script>
