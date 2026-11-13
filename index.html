@@ -145,6 +145,15 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 /* 長程式碼：產生中只露出最後幾行，完成後預設收合 */
 .code.live pre{max-height:calc(13.5px * 1.55 * 10 + 24px);overflow-y:hidden;-webkit-mask-image:linear-gradient(transparent,#000 30%);mask-image:linear-gradient(transparent,#000 30%)}
 .code.long:not(.open) pre{max-height:calc(13.5px * 1.55 * 8 + 24px);overflow-y:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+/* 模型畫的圖 */
+.fig{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:.9em 0;background:var(--surface)}
+.fig .bar{display:flex;justify-content:space-between;align-items:center;padding:2px 6px 2px 14px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--line)}
+.fig .bar button{padding:6px 9px;border-radius:6px;min-height:32px}
+.fig .canvas{padding:18px 14px;overflow-x:auto;color:var(--ink);-webkit-overflow-scrolling:touch}
+.fig .canvas svg{display:block;margin:0 auto;max-width:100%;height:auto;min-width:min(100%,360px);font-family:var(--sans)}
+.fig.live .canvas{padding:14px}
+.fig pre{margin:0;padding:12px 14px;overflow-x:auto;border-top:1px solid var(--line);background:var(--code-bg)}
+.fig pre code{font-size:13px;white-space:pre}
 .code .more{display:block;width:100%;min-height:40px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}
 .code .more:active{background:var(--bubble)}
 .code.live .more,.code:not(.long) .more{display:none}
@@ -335,6 +344,8 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <textarea id="memory" placeholder="寫下希望模型一直記得的事，一行一項。例如：我是大學生，正在修數位訊號處理。" style="min-height:110px"></textarea>
         <div class="row"><input type="checkbox" id="useMemory"><label for="useMemory" style="font-weight:400">在每次對話中使用記憶</label></div>
         <small>記憶只存在這台裝置，每次送出時附在系統指示裡，所有對話共用。</small></div>
+      <div class="f"><div class="row"><input type="checkbox" id="diagrams"><label for="diagrams">讓模型用 SVG 畫圖</label></div>
+        <small>需要圖解時，請模型畫成 SVG 並直接顯示成圖（訊號流程圖、方塊圖、電路、流程圖等），取代用文字符號拼的圖。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="lenient"><label for="lenient">放寬安全過濾</label></div>
         <small>把可調整的安全過濾設為關閉，減少回覆被擋下而變成空白。Google 固定的禁止內容規則不受影響。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="noEmoji"><label for="noEmoji">回覆不使用 emoji</label></div>
@@ -414,7 +425,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, diagrams:true, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
@@ -520,11 +531,32 @@ function renderBlocks(md, text, final) {
   while (kids.length > blocks.length) kids.pop().el.remove();
 }
 
+/* 模型用 ```svg 畫的圖：清理後直接顯示成圖，可看原始碼、放大、下載 */
+function drawing(src, final) {
+  const box = h('div', 'fig' + (final ? '' : ' live')), bar = h('div', 'bar'), canvas = h('div', 'canvas');
+  bar.append(h('span', '', final ? '圖' : '圖 · 繪製中'));
+  if (!final) { canvas.innerHTML = '<span class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>正在繪圖</span></span>'; box.append(bar, canvas); return box; }
+  const clean = window.DOMPurify ? DOMPurify.sanitize(src, { USE_PROFILES: { svg: true, svgFilters: true }, ADD_TAGS: ['use'] }) : '';
+  canvas.innerHTML = clean;
+  const svg = canvas.querySelector('svg');
+  if (!svg) { const pre = h('pre'), c = h('code', '', src); pre.append(c); canvas.replaceWith(pre); box.append(bar); bar.firstChild.textContent = '圖（無法顯示，以下是原始碼）'; box.append(pre); return box; }
+  if (!svg.getAttribute('viewBox')) { const w = parseFloat(svg.getAttribute('width')), hh = parseFloat(svg.getAttribute('height')); if (w && hh) svg.setAttribute('viewBox', '0 0 ' + w + ' ' + hh); }
+  svg.removeAttribute('height'); if (!svg.getAttribute('width') || /%$/.test(svg.getAttribute('width'))) svg.removeAttribute('width');
+  svg.setAttribute('role', 'img');
+  const tools = h('span'), mk = (act, t) => { const x = h('button', '', t); x.dataset.act = act; x.dataset.lang = 'svg'; tools.append(x); };
+  mk('figsrc', '原始碼'); mk('figzoom', '放大'); mk('dl', '下載'); mk('copycode', '複製'); bar.append(tools);
+  const pre = h('pre'), c = h('code', '', src); pre.hidden = true; pre.append(c);
+  box.append(bar, canvas, pre); box._src = src;
+  return box;
+}
+
 function decorate(root, final) {
   root.querySelectorAll('table').forEach(t => { const w = h('div', 'tablewrap'); t.replaceWith(w); w.append(t); });
   root.querySelectorAll('pre').forEach(pre => {
     const code = pre.querySelector('code'); if (!code) return;
     const lang = (code.className.match(/language-([\w+#-]+)/) || [])[1] || '';
+    const src = code.textContent;
+    if (/^svg$/i.test(lang) || (/^(xml|html)?$/i.test(lang) && /^\s*<svg[\s>]/i.test(src))) { pre.replaceWith(drawing(src, final)); return; }
     if (window.hljs) { try {
       if (lang && hljs.getLanguage(lang)) code.innerHTML = hljs.highlight(code.textContent, { language: lang }).value;
       else if (final && code.textContent.length < 20000) code.innerHTML = hljs.highlightAuto(code.textContent).value;
@@ -1002,6 +1034,18 @@ async function stream(key, model, body, signal, onChunk) {
   if (tail.startsWith('data:')) { let j = null; try { j = JSON.parse(tail.slice(5)); } catch {} if (j) onChunk(j); }
 }
 
+const DIAGRAM_RULES = [
+  '需要用圖說明時（方塊圖、訊號流程圖、流程圖、電路圖、狀態圖、座標圖、示意圖等），請畫成 SVG：輸出一個 ```svg 程式碼區塊，裡面只放一個完整的 <svg> 元素，介面會直接把它顯示成圖。不要用 ASCII 字元或純文字排版來畫圖。',
+  'SVG 規則：',
+  '- 一定要有 viewBox，寬度在 360 到 800 之間；不要設定 width 與 height。背景透明，不畫底色矩形。',
+  '- 線條與文字顏色一律用 currentColor（深淺色模式都看得清楚）；需要區分時才額外用一種強調色，例如 #4285f4。',
+  '- 文字用 font-family="sans-serif"、font-size 14 左右；下標與上標用 <tspan> 搭配 baseline-shift 或較小字級，例如 z<tspan baseline-shift="super" font-size="10">-1</tspan>。',
+  '- 箭頭用 <defs> 裡的 <marker>（orient="auto"），線段結尾加 marker-end。節點用小實心圓。',
+  '- 先規劃座標格線再畫，節點對齊格線，線段水平或垂直；所有標籤放在線段旁邊，不可與線條、箭頭或其他文字重疊，也不可超出 viewBox。',
+  '- 不使用 <script>、<foreignObject>、外部圖片、外部字型或連結。',
+  '- 圖的前後用一兩句文字說明圖的內容。'
+].join('\n');
+
 async function run(chat, msg) {
   if (msg.img) return runImage(chat, msg);
   const keys = activeKeys();
@@ -1010,6 +1054,7 @@ async function run(chat, msg) {
   const gem = gemOf(chat.gem), mem = S.useMemory && S.memory.trim();
   const sys = [S.system.trim(),
     mem && '以下是使用者希望你記住的資訊，回答時自然參考，不必特別提起：\n' + mem,
+    S.diagrams && DIAGRAM_RULES,
     S.noEmoji && '回覆中不要使用任何 emoji 或表情符號（包括標題、條列與結尾），改用一般文字與 Markdown 格式。',
     gem && gem.prompt.trim()].filter(Boolean).join('\n\n');
   if (sys) body.systemInstruction = { parts: [{ text: sys }] };
@@ -1147,9 +1192,18 @@ $('#msgs').addEventListener('click', e => {
     if (!open && box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start' });
     return;
   }
-  if (act === 'copycode') return copyText(b.closest('.code').querySelector('code').textContent);
+  if (act === 'figsrc') { const pre = b.closest('.fig').querySelector('pre'); pre.hidden = !pre.hidden; b.textContent = pre.hidden ? '原始碼' : '隱藏原始碼'; return; }
+  if (act === 'figzoom') {
+    const box = b.closest('.fig'), svg = box.querySelector('svg').cloneNode(true);
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); svg.style.color = '#1f1f1f';
+    const vb = (svg.getAttribute('viewBox') || '0 0 800 600').split(/[\s,]+/).map(Number);
+    svg.setAttribute('width', vb[2] * 2); svg.setAttribute('height', vb[3] * 2);
+    const txt = new XMLSerializer().serializeToString(svg).replace(/currentColor/g, '#1f1f1f');
+    return openViewer([{ mime: 'image/svg+xml', data: btoa(unescape(encodeURIComponent(txt))), name: '圖' }], 0);
+  }
+  if (act === 'copycode') return copyText(b.closest('.code, .fig').querySelector('code').textContent);
   if (act === 'preview') return openPreview(b.closest('.code').querySelector('code').textContent);
-  if (act === 'dl') return downloadCode(b.closest('.code').querySelector('code').textContent, b.dataset.lang);
+  if (act === 'dl') return downloadCode(b.closest('.code, .fig').querySelector('code').textContent, b.dataset.lang);
   const el = b.closest('.msg'), m = cur && cur.messages.find(x => x.id === el.dataset.id); if (!m) return;
   if (act === 'view') { const imgs = (m.atts || []).filter(isImg); return openViewer(imgs, [...el.querySelectorAll('.atts img')].indexOf(b)); }
   if (act === 'viewgen') return openViewer(m.images.map((g, i) => ({ mime: g.mime, data: g.data, name: '生成的圖片 ' + (i + 1) })), [...el.querySelectorAll('.gens img')].indexOf(b));
@@ -1241,7 +1295,7 @@ async function loadModels(quiet) {
 }
 function openSettings() {
   $('#provider').value = S.provider; $('#vkey').value = S.vkey; $('#vproject').value = S.vproject; $('#vlocation').value = S.vlocation; showProvider();
-  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#memory').value = S.memory; $('#useMemory').checked = S.useMemory; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; gemEditorFill();
+  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#memory').value = S.memory; $('#useMemory').checked = S.useMemory; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; $('#diagrams').checked = S.diagrams; gemEditorFill();
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
   $('#fx').value = S.fx; $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
   $('#modal').hidden = false; closeDrawer(); fit(); $('.sheet .body').scrollTop = 0;
@@ -1271,6 +1325,7 @@ $('#customModel').onchange = e => { S.customModel = e.target.value.trim(); if (S
 $('#system').onchange = e => { S.system = e.target.value; saveS(); };
 $('#memory').onchange = e => { S.memory = e.target.value; saveS(); };
 $('#useMemory').onchange = e => { S.useMemory = e.target.checked; saveS(); };
+$('#diagrams').onchange = e => { S.diagrams = e.target.checked; saveS(); };
 $('#lenient').onchange = e => { S.lenient = e.target.checked; saveS(); };
 $('#noEmoji').onchange = e => { S.noEmoji = e.target.checked; saveS(); renderChat(); };
 let gemEditing = '';
