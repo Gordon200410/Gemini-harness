@@ -188,6 +188,9 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 .chips button small{display:block;color:var(--muted)}
 
 /* 輸入區 */
+#toTop{position:absolute;left:50%;transform:translateX(-50%);top:calc(64px + env(safe-area-inset-top));height:36px;padding:0 14px 0 10px;border-radius:999px;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.15);display:flex;align-items:center;gap:6px;font-size:13.5px;z-index:5}
+#toTop svg{width:16px;height:16px}
+#title{cursor:pointer}
 #toBottom{position:absolute;left:50%;transform:translateX(-50%);bottom:150px;width:40px;height:40px;border-radius:50%;background:var(--surface);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.15);display:grid;place-items:center;z-index:5}
 footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 .fwrap{max-width:780px;margin:0 auto}
@@ -283,6 +286,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       <button class="icon" id="newChat2" aria-label="新對話"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
     </header>
     <div id="scroll"><div id="msgs"></div></div>
+    <button id="toTop" hidden aria-label="回到對話開頭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>回到開頭</button>
     <button id="toBottom" hidden aria-label="捲到最新"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
     <footer><div class="fwrap">
       <div id="banner" hidden><span>正在編輯先前的訊息，送出後會從該處重新開始。</span><button id="cancelEdit">取消</button></div>
@@ -1245,7 +1249,25 @@ $('#sideToggle').onclick = () => { if (narrow()) $('#app').classList.toggle('dra
 $('#scrim').onclick = closeDrawer;
 $('#send').onclick = submit;
 $('#toBottom').onclick = () => { stick = true; toBottom(); };
-$('#scroll').addEventListener('scroll', () => { const s = $('#scroll'); stick = s.scrollHeight - s.scrollTop - s.clientHeight < 60; $('#toBottom').hidden = stick || !cur || !cur.messages.length; }, { passive: true });
+/* 回到開頭：往上捲一段距離時出現，點標題列也可以（iOS 點狀態列對這個捲動區無效） */
+function toTop() {
+  const s = $('#scroll'); stick = false; $('#toTop').hidden = true;
+  s.scrollTo({ top: 0, behavior: 'smooth' });
+  // 較舊的訊息延後繪製，高度是估計值；捲動停下後再校正一次
+  let prev = -1, n = 0;
+  const fix = () => { const y = s.scrollTop; if (y === 0 || ++n > 20) return; if (y === prev) { s.scrollTop = 0; if (s.scrollTop === 0) return; } prev = y; setTimeout(fix, 120); };
+  setTimeout(fix, 300);
+}
+$('#toTop').onclick = toTop;
+$('#title').onclick = () => { if (cur && cur.messages.length) toTop(); };
+let lastY = 0, topT = 0;
+$('#scroll').addEventListener('scroll', () => {
+  const s = $('#scroll'), y = s.scrollTop, has = !!(cur && cur.messages.length);
+  stick = s.scrollHeight - y - s.clientHeight < 60; $('#toBottom').hidden = stick || !has;
+  if (y < lastY - 4 && y > 900 && has) { $('#toTop').hidden = false; clearTimeout(topT); topT = setTimeout(() => { $('#toTop').hidden = true; }, 2500); }
+  else if (y > lastY + 4 || y < 200) $('#toTop').hidden = true;
+  lastY = y;
+}, { passive: true });
 $('#input').addEventListener('input', () => { grow(); updateSend(); saveDraft(); });
 $('#input').addEventListener('keydown', e => {
   if (e.isComposing || e.keyCode === 229) return;
