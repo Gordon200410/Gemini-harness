@@ -1252,11 +1252,19 @@ $('#toBottom').onclick = () => { stick = true; toBottom(); };
 /* 回到開頭：往上捲一段距離時出現，點標題列也可以（iOS 點狀態列對這個捲動區無效） */
 function toTop() {
   const s = $('#scroll'); stick = false; $('#toTop').hidden = true;
-  s.scrollTo({ top: 0, behavior: 'smooth' });
-  // 較舊的訊息延後繪製，高度是估計值；捲動停下後再校正一次
-  let prev = -1, n = 0;
-  const fix = () => { const y = s.scrollTop; if (y === 0 || ++n > 20) return; if (y === prev) { s.scrollTop = 0; if (s.scrollTop === 0) return; } prev = y; setTimeout(fix, 120); };
-  setTimeout(fix, 300);
+  if (s.scrollTop <= 0) return;
+  // 長距離平滑捲動會一路觸發舊訊息的繪製而卡頓：先瞬間跳到開頭附近，只平滑捲最後不到一個畫面
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  s.style.overflowY = 'hidden';                     // 停下 iPad 正在進行的慣性捲動
+  s.scrollTop = Math.min(s.scrollTop, Math.round(s.clientHeight * 0.5));
+  requestAnimationFrame(() => {
+    s.style.overflowY = '';
+    if (reduce) { s.scrollTop = 0; return; }
+    s.scrollTo({ top: 0, behavior: 'smooth' });
+    let prev = -1, n = 0;
+    const fix = () => { const y = s.scrollTop; if (y === 0 || ++n > 15) return; if (y === prev) { s.scrollTop = 0; return; } prev = y; setTimeout(fix, 100); };
+    setTimeout(fix, 250);
+  });
 }
 $('#toTop').onclick = toTop;
 $('#title').onclick = () => { if (cur && cur.messages.length) toTop(); };
