@@ -389,6 +389,7 @@ const API = 'https://generativelanguage.googleapis.com/v1beta';
 const FALLBACK_MODELS = [
   {id:'gemini-4-argon', name:'Gemini 4 Argon'},
   {id:'gemini-4-carbon', name:'Gemini 4 Carbon'},
+  {id:'gemini-4-hydrogen', name:'Gemini 4 Hydrogen'},
   {id:'gemini-3.8-flash', name:'Gemini 3.8 Flash'},
   {id:'gemini-3.6-flash', name:'Gemini 3.6 Flash'},
   {id:'gemini-3.5-flash-lite', name:'Gemini 3.5 Flash-Lite'},
@@ -401,7 +402,7 @@ const FALLBACK_MODELS = [
   {id:'gemma-4-31b-it', name:'Gemma 4 31B'},
   {id:'gemma-4-26b-a4b-it', name:'Gemma 4 26B'}
 ];
-const LIST_VER = 2;
+const LIST_VER = 3;
 /* 只留文字對話模型；語音、Live、影像、嵌入、代理等一律排除 */
 const NOT_CHAT = /(embedding|image|banana|tts|live|audio|aqa|robotics|computer-use|transcribe|translate|omni|lyria|veo|imagen|research|antigravity|decision|learnlm|-latest$|-\d{3}$|-\d{2}-\d{4}$|^gemini-[12]\.[05]-.*exp|^gemini-2\.0|^gemini-1)/;
 const isChat = id => (/^gemini-/.test(id) || /^gemma-4/.test(id)) && !NOT_CHAT.test(id);
@@ -587,6 +588,7 @@ function modelOptions() {
 const PRICES = [
   [/^gemini-4-argon/,            [{ until: '2026-12-01', i: 2, o: 10 }, { i: 4, o: 20 }]],
   [/^gemini-4-carbon/,           [{ i: 2, o: 10 }]],
+  [/^gemini-4-hydrogen/,         [{ i: 1.5, o: 7.5 }]],
   [/^gemini-3\.[68]-flash(?!-lite)/, [{ until: '2027-01-01', i: 0.75, o: 3.75 }, { i: 1.5, o: 7.5 }]],
   [/^gemini-3\.5-flash-lite/,     [{ i: 0.30, o: 2.50 }]],
   [/^gemini-3\.1-pro/,            [{ i: 2, o: 12, big: { i: 4, o: 18 } }]],
@@ -626,12 +628,13 @@ function showTotal() {
 }
 
 function thinkOptions(id) {
-  const L = { minimal: '最低', low: '低', medium: '中', high: '高' };
+  const L = { minimal: '最低', low: '低', medium: '中', high: '高', xhigh: '極高' };
   const lv = a => ({ kind: 'level', opts: a.map(v => [v, L[v]]) });
   if (/^gemini-2\.5/.test(id)) {
     const pro = /pro/.test(id);
     return { kind: 'budget', opts: [['-1', '自動']].concat(pro ? [] : [['0', '關閉']], [['1024', '低'], ['8192', '中'], [pro ? '32768' : '24576', '高']]) };
   }
+  if (/^gemini-4-hydrogen/.test(id)) return lv(['low', 'medium', 'high', 'xhigh']);
   if (/^gemini-4/.test(id) || /^gemini-3\.8-flash(?!-lite)/.test(id)) return lv(['low', 'medium', 'high']);
   if (/^gemini-3(\.\d+)?-flash-lite/.test(id) || /^gemini-3\.6-flash/.test(id) || /^gemini-3-flash/.test(id)) return lv(['minimal', 'low', 'medium', 'high']);
   if (/^gemini-3-pro/.test(id)) return lv(['low', 'high']);
