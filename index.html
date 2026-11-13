@@ -335,6 +335,8 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <textarea id="memory" placeholder="寫下希望模型一直記得的事，一行一項。例如：我是大學生，正在修數位訊號處理。" style="min-height:110px"></textarea>
         <div class="row"><input type="checkbox" id="useMemory"><label for="useMemory" style="font-weight:400">在每次對話中使用記憶</label></div>
         <small>記憶只存在這台裝置，每次送出時附在系統指示裡，所有對話共用。</small></div>
+      <div class="f"><div class="row"><input type="checkbox" id="lenient"><label for="lenient">放寬安全過濾</label></div>
+        <small>把可調整的安全過濾設為關閉，減少回覆被擋下而變成空白。Google 固定的禁止內容規則不受影響。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="noEmoji"><label for="noEmoji">回覆不使用 emoji</label></div>
         <small>會請模型不要用 emoji；模型仍然用了的話，顯示時也會自動去掉（程式碼內不受影響）。</small></div>
       <div class="f"><label for="system">系統指示</label>
@@ -411,7 +413,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
@@ -765,7 +767,7 @@ function modelEl(m) {
       md._blk = null;
       if (m.streaming) {
         const sec = Math.floor((Date.now() - (m.at || Date.now())) / 1000);
-        md.innerHTML = '<span class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>' + (m.thoughts ? '思考中' : '正在回覆') + (sec >= 2 ? ' · ' + sec + ' 秒' : '') + '</span></span>';
+        md.innerHTML = '<span class="thinking"><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span><span>' + (m.retry ? '沒有收到回覆，自動重試中（' + m.retry + ' / 2）' : m.thoughts ? '思考中' : '正在回覆') + (sec >= 2 ? ' · ' + sec + ' 秒' : '') + '</span></span>';
       } else md.innerHTML = '';
     }
     foot.innerHTML = '';
@@ -793,6 +795,7 @@ function modelEl(m) {
     const u = m.usage, bits = [];
     if (m.model) bits.push(m.model);
     if (m.thinkMs >= 1000) bits.push('思考 ' + Math.round(m.thinkMs / 1000) + ' 秒');
+    if (m.retry && m.text) bits.push('自動重試 ' + m.retry + ' 次');
     const k = costOf(m);
     if (k) bits.push('輸入 ' + fmtTok(k.inTok) + ' · 輸出 ' + fmtTok(k.outTok), k.usd == null ? '無此模型價格' : fmtMoney(k.usd));
     if (bits.length) acts.append(h('span', 'meta', bits.join(' · ')));
@@ -992,6 +995,8 @@ async function stream(key, model, body, signal, onChunk) {
       onChunk(j);
     }
   }
+  const tail = buf.trim();
+  if (tail.startsWith('data:')) { let j = null; try { j = JSON.parse(tail.slice(5)); } catch {} if (j) onChunk(j); }
 }
 
 async function run(chat, msg) {
@@ -1013,6 +1018,7 @@ async function run(chat, msg) {
   if (Object.keys(tc).length) gc.thinkingConfig = tc;
   if (Object.keys(gc).length) body.generationConfig = gc;
   if (S.search) body.tools = [{ googleSearch: {} }];
+  if (S.lenient) body.safetySettings = ['HARM_CATEGORY_HARASSMENT', 'HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT'].map(category => ({ category, threshold: 'OFF' }));
 
   const ctrl = new AbortController();
   busy = { ctrl, msg }; msg.streaming = true; msg.model = (isVertex() ? 'Vertex · ' : '') + S.model; msg.mid = S.model; msg.at = Date.now(); updateSend();
@@ -1021,24 +1027,46 @@ async function run(chat, msg) {
   const tick = setInterval(() => { if (!msg.text) refreshMsg(msg); }, 1000);
   const onChunk = j => {
     if (j.error) { const e = new Error(j.error.message || ''); e.status = j.error.code; throw e; }
-    if (j.promptFeedback && j.promptFeedback.blockReason) msg.note = '提示內容被安全機制擋下（' + j.promptFeedback.blockReason + '）。';
+    if (j.promptFeedback && j.promptFeedback.blockReason) msg.blocked = true, msg.note = '提示內容被安全機制擋下（' + j.promptFeedback.blockReason + '）。';
     const c = (j.candidates || [])[0];
     if (c) {
       for (const p of (c.content && c.content.parts) || []) { if (typeof p.text !== 'string') continue; if (p.thought) msg.thoughts = (msg.thoughts || '') + p.text; else { if (!msg.text && p.text && msg.thinkMs == null) msg.thinkMs = Date.now() - msg.at; msg.text += p.text; } }
       const g = c.groundingMetadata;
       if (g && g.groundingChunks) { const seen = new Set(), src = []; for (const k of g.groundingChunks) { const w = k.web; if (w && w.uri && !seen.has(w.uri)) { seen.add(w.uri); src.push({ uri: w.uri, title: w.title || '' }); } } if (src.length) msg.sources = src; }
+      if (c.finishReason) msg.finish = c.finishReason;
       if (c.finishReason && c.finishReason !== 'STOP') msg.note = c.finishReason === 'MAX_TOKENS' ? '回覆達到長度上限而中斷。' : '回覆提前結束（' + c.finishReason + '）。';
     }
     if (j.usageMetadata) msg.usage = j.usageMetadata;
     paint();
   };
+  // 沒有回傳文字時自動重試：暫時性錯誤、空回覆、偶發的安全攔截最多再試 2 次
+  const MAXR = 2, wait = ms => new Promise(r => setTimeout(r, ms));
+  const transient = e => !e.status || e.status === 429 || e.status >= 500;
+  const reset = () => { msg.thoughts = ''; delete msg.note; delete msg.finish; delete msg.sources; delete msg.thinkMs; msg.at = Date.now(); };
   try {
     if (!keys.length) throw Object.assign(new Error('尚未設定金鑰'), { status: 403 });
-    for (let k = 0; k < keys.length; k++) {
-      try { await stream(keys[k], S.model, body, ctrl.signal, onChunk); break; }
-      catch (e) { if (e.name !== 'AbortError' && (e.status === 429 || e.status === 403) && k < keys.length - 1 && !msg.text) continue; throw e; }
+    for (let attempt = 0; ; attempt++) {
+      try {
+        for (let k = 0; k < keys.length; k++) {
+          try { await stream(keys[k], S.model, body, ctrl.signal, onChunk); break; }
+          catch (e) { if (e.name !== 'AbortError' && (e.status === 429 || e.status === 403) && k < keys.length - 1 && !msg.text) continue; throw e; }
+        }
+      } catch (e) {
+        if (e.name === 'AbortError' || msg.text) throw e;
+        // 有些模型或 Vertex 不接受關閉安全過濾，拿掉這項再試，不算重試次數
+        if (e.status === 400 && body.safetySettings && /safety|threshold|harm/i.test(e.message || '')) { delete body.safetySettings; attempt--; continue; }
+        if (attempt >= MAXR || !transient(e)) throw e;
+        msg.retry = attempt + 1; reset(); refreshMsg(msg); await wait(e.status === 429 ? 2500 * (attempt + 1) : 1200 * (attempt + 1)); continue;
+      }
+      if (msg.text || msg.blocked || attempt >= MAXR || ['PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII'].includes(msg.finish)) break;
+      // 思考把長度用光時，重試改用較低的思考程度
+      if (msg.finish === 'MAX_TOKENS' && gc.thinkingConfig) { const t = gc.thinkingConfig; if (t.thinkingLevel) t.thinkingLevel = 'low'; if (t.thinkingBudget) t.thinkingBudget = 1024; }
+      msg.retry = attempt + 1; reset(); refreshMsg(msg); await wait(700);
     }
-    if (!msg.text && !msg.note) msg.note = '模型沒有回傳內容。';
+    if (!msg.text) {
+      const why = { SAFETY: '回覆被安全機制擋下', RECITATION: '回覆可能與受版權保護的內容過於相似而被擋下', PROHIBITED_CONTENT: '回覆被判定為禁止內容', BLOCKLIST: '回覆含有封鎖字詞', SPII: '回覆含有敏感個人資料而被擋下', MAX_TOKENS: '思考用完了長度上限，還沒開始回答', MALFORMED_FUNCTION_CALL: '模型產生了格式錯誤的工具呼叫' }[msg.finish];
+      if (!msg.blocked) msg.note = (why || '模型沒有回傳內容') + (msg.retry ? '（已自動重試 ' + msg.retry + ' 次）' : '') + '。可以按「重試」，或換個模型、調低思考程度、關掉 Google 搜尋再試。';
+    }
   } catch (e) {
     if (e.name === 'AbortError') msg.note = '已停止。'; else msg.error = explain(e);
   }
@@ -1204,12 +1232,13 @@ async function loadModels(quiet) {
       .map(m => ({ id: m.name.replace(/^models\//, ''), name: m.displayName || m.name }))
       .filter(m => isChat(m.id))
       .sort((x, y) => rank(y.id) - rank(x.id) || x.id.localeCompare(y.id));
-    if (list.length) { S.models = list; S.modelsAt = Date.now(); if (!list.some(m => m.id === S.model) && S.model !== S.customModel) S.model = (list.find(m => m.id === 'gemini-3.8-flash') || list[0]).id; saveS(); modelOptions(); if (!quiet) toast('已載入 ' + list.length + ' 個模型'); }
+    const known = new Set((S.seen || S.models).map(m => m.id)), fresh = list.filter(m => !known.has(m.id));
+    if (list.length) { S.seen = list.map(m => ({ id: m.id })); if (fresh.length && S.seenInit) toast('Google 新增了模型：' + fresh.map(m => m.name).join('、')); S.seenInit = true; S.models = list; S.modelsAt = Date.now(); if (!list.some(m => m.id === S.model) && S.model !== S.customModel) S.model = (list.find(m => m.id === 'gemini-3.8-flash') || list[0]).id; saveS(); modelOptions(); if (!quiet) toast('已載入 ' + list.length + ' 個模型'); }
   } catch (e) { if (!quiet) toast(explain(e).slice(0, 60)); }
 }
 function openSettings() {
   $('#provider').value = S.provider; $('#vkey').value = S.vkey; $('#vproject').value = S.vproject; $('#vlocation').value = S.vlocation; showProvider();
-  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#memory').value = S.memory; $('#useMemory').checked = S.useMemory; $('#noEmoji').checked = S.noEmoji; gemEditorFill();
+  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#memory').value = S.memory; $('#useMemory').checked = S.useMemory; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; gemEditorFill();
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
   $('#fx').value = S.fx; $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
   $('#modal').hidden = false; closeDrawer(); fit(); $('.sheet .body').scrollTop = 0;
@@ -1239,6 +1268,7 @@ $('#customModel').onchange = e => { S.customModel = e.target.value.trim(); if (S
 $('#system').onchange = e => { S.system = e.target.value; saveS(); };
 $('#memory').onchange = e => { S.memory = e.target.value; saveS(); };
 $('#useMemory').onchange = e => { S.useMemory = e.target.checked; saveS(); };
+$('#lenient').onchange = e => { S.lenient = e.target.checked; saveS(); };
 $('#noEmoji').onchange = e => { S.noEmoji = e.target.checked; saveS(); renderChat(); };
 let gemEditing = '';
 function gemEditorFill() {
@@ -1342,7 +1372,7 @@ window.addEventListener('resize', fit);
   cur = chats.find(c => c.id === S.last) || null;
   renderList(); renderChat(); loadDraft();
   if ('serviceWorker' in navigator && location.protocol === 'https:' && /\.github\.io$/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});
-  if (!isVertex() && (S.key1 || S.key2) && Date.now() - S.modelsAt > 864e5) loadModels(true);
+  if (!isVertex() && (S.key1 || S.key2) && Date.now() - S.modelsAt > 216e5) loadModels(true);
 })();
 })();
 </script>
