@@ -120,7 +120,6 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 .md>.blk:first-child>:first-child{margin-top:0}.md>.blk:last-child>:last-child{margin-bottom:0}
 .msg:not(:nth-last-child(-n+6)){content-visibility:auto;contain-intrinsic-size:auto 320px}
 .thinking{display:inline-flex;align-items:center;gap:10px;color:var(--muted);font-size:14.5px}
-#gameInfo{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 120px;text-align:right}
 .stage{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--accent);border:1px solid var(--line);border-radius:999px;padding:2px 11px;margin-bottom:8px}
 .stage b{font-weight:400;color:var(--muted)}
 .vers{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;color:var(--muted)}
@@ -266,6 +265,75 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 .pickmenu button:active{background:var(--bubble)}
 .pickmenu button i{width:18px;flex:none;font-style:normal;color:var(--accent)}
 .pickmenu button[aria-selected="true"]{font-weight:600}
+/* ===== 遊戲工作室：深色控制台風格，只套用在工作室對話與預覽面板 ===== */
+.btn.studio-btn{background:#0d1222;color:#e8eefc;border-color:#0d1222;font-weight:600;gap:8px}
+.btn.studio-btn svg{width:20px;height:20px;fill:none;stroke:#7aa2ff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.btn.studio-btn circle{fill:#ffb547;stroke:none}
+.item .tag{font:700 9.5px/1 var(--mono);letter-spacing:.1em;color:#5b7bd6;border:1px solid currentColor;border-radius:4px;padding:3px 4px;flex:none}
+#app.studio main,#app.studio #gpane{
+  --bg:#080b12; --surface:#10162a; --field:#0e1424; --ink:#e8eefc; --muted:#8792a8; --line:#1d2740;
+  --accent:#7aa2ff; --accent-ink:#071233; --bubble:#172039; --sel:#1a2442; --code-bg:#0b1020; --danger:#ff6b6b;
+  --s1:#ffb86b; --s2:#7ee2b8; --s3:#c4a7ff; --s4:#5f6b85; --run:#ffb547; --pass:#3ddc97; --fail:#ff6b6b;
+  color-scheme:dark; color:var(--ink); background:var(--bg)}
+#app.studio main{background:radial-gradient(900px 420px at 80% -8%,rgba(122,162,255,.14),transparent 62%),radial-gradient(700px 380px at -10% 110%,rgba(255,181,71,.07),transparent 60%),var(--bg)}
+#app.studio #scroll{background-image:linear-gradient(rgba(122,162,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(122,162,255,.045) 1px,transparent 1px);background-size:32px 32px;background-attachment:local}
+#app.studio.paneon #total{display:none}
+#app.studio #title{color:var(--ink);display:flex;align-items:center;gap:10px}
+#app.studio #title::before{content:'GAME STUDIO';font:700 10px/1 var(--mono);letter-spacing:.16em;color:var(--accent);border:1px solid rgba(122,162,255,.4);border-radius:5px;padding:5px 7px;flex:none}
+#pipe{display:flex;align-items:stretch;gap:0;padding:4px 16px 12px;border-bottom:1px solid var(--line)}
+#pipe .node{display:flex;flex-direction:column;gap:3px;padding:9px 12px 8px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.03),transparent),var(--surface);flex:1 1 0;min-width:0;transition:border-color .25s,box-shadow .25s}
+#pipe .nl{font:700 10.5px/1 var(--mono);letter-spacing:.14em;color:var(--muted);display:flex;align-items:center;gap:7px}
+#pipe .nl i{width:7px;height:7px;border-radius:50%;background:#2a3655;flex:none}
+#pipe .ns{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+#pipe .node .pick{width:100%}
+#pipe .node .pickmenu{left:0;right:auto}
+#pipe .node .pickbtn{border:0;background:none;padding:0;min-height:28px;font-size:14.5px;font-weight:600;max-width:100%;color:var(--ink)}
+#pipe .node[data-st="run"]{border-color:var(--run);box-shadow:0 0 0 1px rgba(255,181,71,.35),0 0 24px rgba(255,181,71,.18)}
+#pipe .node[data-st="run"] .nl i{background:var(--run);box-shadow:0 0 10px var(--run);animation:blink 1s ease-in-out infinite}
+#pipe .node[data-st="run"] .ns{color:var(--run)}
+#pipe .node[data-st="done"] .nl i{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+#pipe .node[data-st="pass"]{border-color:rgba(61,220,151,.6)}
+#pipe .node[data-st="pass"] .nl i{background:var(--pass);box-shadow:0 0 10px var(--pass)}
+#pipe .node[data-st="pass"] .ns{color:var(--pass)}
+#pipe .node[data-st="fail"]{border-color:rgba(255,107,107,.6)}
+#pipe .node[data-st="fail"] .nl i{background:var(--fail);box-shadow:0 0 10px var(--fail)}
+#pipe .node[data-st="fail"] .ns{color:var(--fail)}
+#pipe .link{align-self:center;width:14px;height:2px;flex:none;background:var(--line);position:relative;overflow:hidden}
+#pipe .link.on{background:rgba(122,162,255,.25)}
+#pipe .link.on::after{content:'';position:absolute;inset:0;width:50%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:flow 1s linear infinite}
+#app.studio .ptools{display:flex;align-items:center;gap:6px;flex:none}
+.ptools .pickbtn{border-color:var(--line);background:var(--surface);font-size:13px;min-height:36px}
+.ptools .pbtn{min-height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13px}
+.ptools .pbtn[aria-pressed="true"]{border-color:rgba(122,162,255,.6);color:var(--accent)}
+@keyframes blink{50%{opacity:.35}}
+@keyframes flow{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+#app.studio .msg.model[data-stage]{border:1px solid var(--line);border-radius:16px;padding:14px 16px 10px;background:rgba(16,22,42,.78);position:relative;overflow:hidden}
+#app.studio .msg.model[data-stage]::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
+#app.studio .msg.model[data-stage="builder"]::before{background:var(--run)}
+#app.studio .msg.model[data-stage="evaluator"]::before{background:var(--pass)}
+#app.studio .msg.model[data-verdict="fail"]::before{background:var(--fail)}
+#app.studio .stage{font:700 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;border:0;padding:0;margin-bottom:12px;color:var(--accent)}
+#app.studio .msg[data-stage="builder"] .stage{color:var(--run)}
+#app.studio .msg[data-stage="evaluator"] .stage{color:var(--pass)}
+#app.studio .msg[data-verdict="fail"] .stage{color:var(--fail)}
+#app.studio .stage b{font:400 11px var(--mono);letter-spacing:.04em;text-transform:none}
+#app.studio .bubble{background:var(--bubble);border:1px solid var(--line)}
+#app.studio #composer{border:1px solid var(--line);box-shadow:0 0 0 1px rgba(122,162,255,.06),0 16px 50px rgba(0,0,0,.45)}
+#app.studio #composer:focus-within{border-color:rgba(122,162,255,.55)}
+#app.studio .hint{color:#5f6b85}
+#app.studio .kicker{font:700 11.5px/1 var(--mono);letter-spacing:.22em;color:var(--accent)}
+#app.studio .welcome h1{font-size:40px;background:linear-gradient(90deg,#7aa2ff,#c4a7ff 50%,#ffb547);-webkit-background-clip:text;background-clip:text;color:transparent}
+#app.studio .chips button{background:var(--surface);border-color:var(--line);transition:border-color .2s,box-shadow .2s}
+#app.studio .chips button:active,#app.studio .chips button:hover{border-color:rgba(122,162,255,.6);box-shadow:0 0 20px rgba(122,162,255,.15)}
+#gpane{width:clamp(340px,34vw,600px);flex:none;border-left:1px solid var(--line);display:flex;flex-direction:column}
+#gpane .gbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px 18px;min-height:52px}
+#gver{font:700 11px/1.4 var(--mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gpane .gtools{display:flex;gap:6px;flex:none}
+#gpane .gtools button:disabled{opacity:.35}
+#gpane .gtools button{font-size:13px;min-height:34px;padding:0 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+#gstage{flex:1;position:relative;padding:0 14px calc(14px + env(safe-area-inset-bottom))}
+#gframe{width:100%;height:100%;border:0;border-radius:14px;background:#000;box-shadow:0 0 0 1px var(--line),0 0 40px rgba(122,162,255,.12)}
+#gempty{position:absolute;inset:0 14px calc(14px + env(safe-area-inset-bottom));display:grid;place-items:center;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px;font-size:14px;padding:24px;line-height:1.7}
 #toast{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:40;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
 </style>
@@ -275,6 +343,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
   <aside id="side" aria-label="對話清單">
     <div class="brand"><i></i>Gemini</div>
     <button class="btn primary" id="newChat">＋ 新對話</button>
+    <button class="btn studio-btn" id="newGame"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r="1"/><circle cx="18" cy="13.8" r="1"/></svg>遊戲工作室</button>
     <input id="search" type="search" placeholder="搜尋對話" autocomplete="off">
     <nav id="chatList"></nav>
     <button class="btn" id="openSettings">設定</button>
@@ -286,8 +355,19 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       <div id="title"></div>
       <span id="total" hidden></span>
       <select id="gemSel" aria-label="Skill"></select>
+      <div class="ptools" id="ptools" hidden>
+        <select id="pmRounds" aria-label="退回修正次數上限"><option value="0">不退回修正</option><option value="1">修正 1 次</option><option value="2">修正 2 次</option><option value="3">修正 3 次</option></select>
+        <button class="pbtn" id="paneBtn" aria-pressed="true">預覽</button>
+      </div>
       <button class="icon" id="newChat2" aria-label="新對話"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
     </header>
+    <div id="pipe" hidden>
+      <div class="node" data-k="planner" data-st="idle"><div class="nl"><i></i>01 PLANNER</div><select id="pmPlanner" aria-label="Planner 使用的模型"></select><div class="ns">待命</div></div>
+      <span class="link" data-k="builder"></span>
+      <div class="node" data-k="builder" data-st="idle"><div class="nl"><i></i>02 BUILDER</div><select id="pmBuilder" aria-label="Builder 使用的模型"></select><div class="ns">待命</div></div>
+      <span class="link" data-k="evaluator"></span>
+      <div class="node" data-k="evaluator" data-st="idle"><div class="nl"><i></i>03 EVALUATOR</div><select id="pmEvaluator" aria-label="Evaluator 使用的模型"></select><div class="ns">待命</div></div>
+    </div>
     <div id="scroll"><div id="msgs"></div></div>
     <button id="toTop" hidden aria-label="回到對話開頭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>回到開頭</button>
     <button id="toBottom" hidden aria-label="捲到最新"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></button>
@@ -301,8 +381,6 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
           <input type="file" id="file" multiple hidden>
           <button class="pill" id="searchToggle" aria-pressed="false">Google 搜尋</button>
           <button class="pill" id="imgToggle" aria-pressed="false">生成圖片</button>
-          <button class="pill" id="gameToggle" aria-pressed="false">製作遊戲</button>
-          <span id="gameInfo" hidden></span>
           <span class="grow"></span>
           <select id="aspect" aria-label="圖片比例" hidden><option value="">比例：自動</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option><option value="16:9">16:9</option><option value="9:16">9:16</option></select>
           <select id="imgModel" aria-label="圖片模型" hidden></select>
@@ -314,6 +392,10 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       <p class="hint">回覆由 Gemini 產生，可能有誤，重要內容請再查證。</p>
     </div></footer>
   </main>
+  <section id="gpane" hidden aria-label="遊戲預覽">
+    <div class="gbar"><span id="gver">尚未產生</span><span class="gtools"><button id="greload">重新開始</button><button id="gfull">全螢幕</button><button id="gclose" aria-label="收起預覽">收起</button></span></div>
+    <div id="gstage"><iframe id="gframe" title="遊戲預覽" sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock"></iframe><div id="gempty">Builder 完成並通過執行檢查後，遊戲會在這裡直接執行。</div></div>
+  </section>
 </div>
 
 <div id="modal" hidden>
@@ -349,12 +431,6 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <input id="gemName" type="text" placeholder="名稱" aria-label="Skill 名稱">
         <textarea id="gemPrompt" placeholder="這個 Skill 的指示，例如角色、語氣、輸出格式" aria-label="Skill 指示" style="min-height:130px"></textarea>
         <small>在對話上方的「Skill」選單切換，每個對話各自記住。Skill 的指示會接在系統指示後面一起送出。</small></div>
-      <div class="f"><span class="lab">製作遊戲模式</span>
-        <div class="row"><label for="gmPlanner" style="font-weight:400;width:5.5em">Planner</label><select id="gmPlanner" style="flex:1;width:auto"></select></div>
-        <div class="row"><label for="gmBuilder" style="font-weight:400;width:5.5em">Builder</label><select id="gmBuilder" style="flex:1;width:auto"></select></div>
-        <div class="row"><label for="gmEvaluator" style="font-weight:400;width:5.5em">Evaluator</label><select id="gmEvaluator" style="flex:1;width:auto"></select></div>
-        <div class="row"><label for="gmRounds" style="font-weight:400;width:5.5em">修正上限</label><select id="gmRounds" style="flex:1;width:auto"><option value="0">不退回修正</option><option value="1">1 次</option><option value="2">2 次</option><option value="3">3 次</option></select></div>
-        <small>在輸入框點「製作遊戲」開啟。Planner 寫規格，Builder 寫出單一 HTML 遊戲，程式會先實際執行檢查錯誤，再交給 Evaluator 審查；不通過就退回 Builder 修正。三個角色各用一個模型，思考程度沿用該模型的設定。每一輪都會各自計費。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="diagrams"><label for="diagrams">讓模型用 SVG 畫圖</label></div>
         <small>需要圖解時，請模型畫成 SVG 並直接顯示成圖（訊號流程圖、方塊圖、電路、流程圖等），取代用文字符號拼的圖。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="lenient"><label for="lenient">放寬安全過濾</label></div>
@@ -484,6 +560,7 @@ const DB = {
 };
 
 /* ---------- 狀態 ---------- */
+let studioNew = false;   // 已按「遊戲工作室」但還沒送出第一則
 let chats = [];          // 全部對話
 let cur = null;          // 目前對話（null = 尚未建立的新對話）
 let busy = null;         // { ctrl, msg }
@@ -599,7 +676,7 @@ async function copyText(t) {
 }
 function applyTheme() { const r = document.documentElement; if (S.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme); }
 const narrow = () => window.matchMedia('(max-width:899px)').matches;
-function applySide() { $('#app').classList.toggle('collapsed', !S.sideOpen); }
+function applySide() { $('#app').classList.toggle('collapsed', !S.sideOpen); if (typeof updatePane === 'function') updatePane(); }
 function closeDrawer() { $('#app').classList.remove('drawer'); }
 
 function renderList() {
@@ -611,6 +688,7 @@ function renderList() {
   for (const c of list) {
     const it = h('div', 'item' + (cur && c.id === cur.id ? ' on' : '')); it.dataset.id = c.id;
     const t = h('button', 't', c.title); t.dataset.act = 'open'; it.append(t);
+    if (c.kind === 'game') it.append(h('span', 'tag', 'GAME'));
     if (cur && c.id === cur.id) {
       const r = h('button', 'mini', '改名'); r.dataset.act = 'rename';
       const d = h('button', 'mini', '刪除'); d.dataset.act = 'delete';
@@ -767,6 +845,7 @@ function gemOptions() {
 }
 
 function welcome() {
+  if (isStudio() && activeKeys().length) return studioWelcome();
   const w = h('div', 'welcome');
   const hr = new Date().getHours();
   w.append(h('h1', '', (hr < 5 ? '夜深了' : hr < 11 ? '早安' : hr < 18 ? '午安' : '晚安') + '，今天想聊什麼？'));
@@ -809,9 +888,11 @@ function modelEl(m) {
   const th = h('details', 'thoughts'); th.append(h('summary', '', '思考過程'), h('div', 'md'));
   const gens = h('div', 'gens'), md = h('div', 'md'), foot = h('div', 'foot');
   if (m.stage) { const st = h('div', 'stage'); st.append(STAGE_NAMES[m.stage] || m.stage, h('b', '', m.round > 1 ? '第 ' + m.round + ' 輪' : '')); if (!(m.round > 1)) st.lastChild.remove(); el.append(st); }
+  if (m.stage) el.dataset.stage = m.stage;
   el.append(th, gens, md, foot);
   el._update = () => {
     const final = !m.streaming;
+    if (m.stage === 'evaluator') { if (final && m.text) el.dataset.verdict = /^[\s*#`>]*PASS\b/i.test(m.text) ? 'pass' : 'fail'; else delete el.dataset.verdict; }
     th.hidden = !m.thoughts;
     if (m.thoughts) th.lastChild.innerHTML = renderMD(m.thoughts);
     gens.hidden = !(m.images && m.images.length);
@@ -862,16 +943,17 @@ function modelEl(m) {
 
 function renderChat() {
   const box = $('#msgs'); box.innerHTML = ''; els.clear();
-  $('#title').textContent = cur ? cur.title : '新對話'; showTotal();
+  applyGameMode();
+  $('#title').textContent = cur ? cur.title : isStudio() ? '新遊戲' : '新對話'; showTotal();
   document.title = (cur ? cur.title + ' · ' : '') + 'Gemini 對話台';
   gemOptions();
   const empty = !cur || !cur.messages.length; box.classList.toggle('empty', empty);
   if (empty) { box.append(welcome()); $('#toBottom').hidden = true; return; }
   for (const m of cur.messages) { const el = m.role === 'user' ? userEl(m) : modelEl(m); els.set(m.id, el); box.append(el); }
-  stick = true; toBottom();
+  stick = true; toBottom(); renderPipe();
 }
 function toBottom() { const s = $('#scroll'); s.scrollTop = s.scrollHeight; $('#toBottom').hidden = true; }
-function refreshMsg(m) { const el = els.get(m.id); if (el && el._update) { el._update(); if (stick) toBottom(); } }
+function refreshMsg(m) { const el = els.get(m.id); if (el && el._update) { el._update(); if (stick) toBottom(); } if (m.stage) renderPipe(); }
 
 function grow() { const i = $('#input'); i.style.height = 'auto'; i.style.height = i.scrollHeight + 'px'; }
 function updateSend() {
@@ -1159,8 +1241,8 @@ async function autoTitle(chat) {
 }
 
 /* ---------- 動作 ---------- */
-function newChat() { saveDraft(true); stopSpeak(); if (busy) busy.ctrl.abort(); cur = null; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); if (!narrow()) $('#input').focus(); }
-function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; saveDraft(true); stopSpeak(); cur = c; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); }
+function newChat() { saveDraft(true); stopSpeak(); if (busy) busy.ctrl.abort(); cur = null; studioNew = false; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); if (!narrow()) $('#input').focus(); }
+function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; saveDraft(true); stopSpeak(); cur = c; studioNew = false; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); }
 
 /* ---------- 製作遊戲模式：Planner 規劃 → Builder 實作 → 實際執行檢查 → Evaluator 審查，不通過就退回 Builder ---------- */
 const STAGE_NAMES = { planner: 'Planner · 規劃', builder: 'Builder · 實作', evaluator: 'Evaluator · 審查' };
@@ -1216,7 +1298,7 @@ async function runGame(chat, userMsg, firstMsg) {
     if (!ok(build)) return;
     const html = lastHtml(build.text);
     if (!html) { build.note = '沒有找到完整的 HTML 程式碼，流程中止。可以按「重新產生」再試。'; refreshMsg(build); await persist(chat); return; }
-    code = html;
+    code = html; if (cur === chat) updatePane();
     // 3. 實際執行檢查
     const errs = await smokeTest(code); if (gameAbort) return;
     build.note = errs.length ? '實際執行檢查發現 ' + errs.length + ' 個錯誤，已交給 Evaluator。' : '實際執行檢查：2 秒內沒有錯誤。'; refreshMsg(build);
@@ -1224,37 +1306,101 @@ async function runGame(chat, userMsg, firstMsg) {
     const ev = await stage('evaluator', r, [{ text: '【規格】\n' + plan.text + '\n\n【Builder 的程式碼】\n```html\n' + code + '\n```\n\n【瀏覽器實際執行 2 秒收集到的錯誤】\n' + (errs.length ? errs.map(e => '- ' + e).join('\n') : '（沒有錯誤）') }]);
     if (!ok(ev)) return;
     verdict = /^[\s*#`>]*PASS\b/i.test(ev.text) ? 'PASS' : 'FAIL';
-    if (verdict === 'PASS') { ev.note = '審查通過。按 Builder 回覆下方的「試玩」開始玩，或直接輸入想修改的地方。'; refreshMsg(ev); break; }
+    if (verdict === 'PASS') { ev.note = '審查通過，可以開始玩了（右側預覽或 Builder 回覆下方的「試玩」）。想修改的地方直接輸入。'; refreshMsg(ev); break; }
     feedback = ev.text + (errs.length ? '\n\n執行錯誤：\n' + errs.map(e => '- ' + e).join('\n') : '');
     if (r === rounds) { ev.note = '已達修正次數上限（' + (rounds - 1) + ' 次），仍未通過。可以先試玩目前版本，或輸入「依照審查意見修正」再跑一輪。'; refreshMsg(ev); }
   }
   await persist(chat); if (cur === chat) showTotal();
 }
+const isStudio = () => cur ? cur.kind === 'game' : studioNew;
+function newGame() { newChat(); studioNew = true; renderChat(); if (!narrow()) $('#input').focus(); }
 function applyGameMode() {
-  const on = !!S.gameMode && !S.imgMode;
-  $('#gameToggle').setAttribute('aria-pressed', on);
-  $('#gameInfo').hidden = !on;
+  const on = isStudio();
+  $('#app').classList.toggle('studio', on);
+  $('#pipe').hidden = $('#ptools').hidden = !on;
+  $('#gemSel').hidden = on;
+  $('#imgToggle').hidden = on || !IMG_ENABLED;
   if (on) {
-    const nm = id => (modelList().find(m => m.id === id) || { name: id }).name.replace(/^Gemini /, '');
-    $('#gameInfo').textContent = nm(S.gameModels.planner) + ' → ' + nm(S.gameModels.builder) + ' → ' + nm(S.gameModels.evaluator);
     $('#model').hidden = $('#think').hidden = $('#searchToggle').hidden = true;
-    $('#input').placeholder = '描述想做的遊戲，或說明要怎麼修改目前的版本';
+    $('#input').placeholder = cur && cur.messages.length ? '說明要怎麼修改目前的版本' : '描述想做的遊戲';
+    fillPipe();
   } else if (!S.imgMode) { $('#model').hidden = $('#searchToggle').hidden = false; thinkSelect(); $('#input').placeholder = '輸入訊息，或貼上圖片'; }
+  updatePane();
 }
+function fillPipe() {
+  [['pmPlanner', 'planner'], ['pmBuilder', 'builder'], ['pmEvaluator', 'evaluator']].forEach(([id, k]) => {
+    const sel = $('#' + id), list = modelList().slice(), want = S.gameModels[k];
+    if (!list.some(m => m.id === want)) list.unshift({ id: want, name: want });
+    const sig = list.map(m => m.id).join('|');
+    if (sel._sig !== sig) { sel._sig = sig; sel.innerHTML = ''; list.forEach(m => { const o = h('option', '', m.name.replace(/^Gemini /, '')); o.value = m.id; sel.append(o); }); }
+    if (sel.value !== want) { sel.value = want; sel.dispatchEvent(new Event('change')); }
+    sel.onchange = e => { if (S.gameModels[k] !== e.target.value) { S.gameModels[k] = e.target.value; saveS(); } };
+  });
+  const r = $('#pmRounds'); if (r.value !== String(S.gameRounds)) { r.value = String(S.gameRounds); r.dispatchEvent(new Event('change')); }
+  r.onchange = e => { S.gameRounds = Number(e.target.value); saveS(); };
+}
+function renderPipe() {
+  if (!isStudio()) return;
+  const ms = cur ? cur.messages : [], li = ms.map(m => m.role).lastIndexOf('user'), after = li < 0 ? [] : ms.slice(li + 1);
+  const st = {};
+  ['planner', 'builder', 'evaluator'].forEach(k => {
+    const m = after.filter(x => x.stage === k).pop(), node = $('#pipe .node[data-k="' + k + '"]');
+    let s = 'idle';
+    if (m) s = m.streaming ? 'run' : (m.error || (!m.text && m.note)) ? 'fail' : k === 'evaluator' ? (/^[\s*#`>]*PASS\b/i.test(m.text) ? 'pass' : 'fail') : 'done';
+    st[k] = s;
+    node.dataset.st = s;
+    node.querySelector('.ns').textContent = ({ idle: '待命', run: '進行中', done: '完成', pass: '通過', fail: k === 'evaluator' ? '退回修正' : '失敗' })[s] + (m && m.round > 1 ? ' · 第 ' + m.round + ' 輪' : '');
+  });
+  document.querySelectorAll('#pipe .link').forEach(l => l.classList.toggle('on', st[l.dataset.k] === 'run'));
+}
+function updatePane() {
+  const pane = $('#gpane'), btn = $('#paneBtn');
+  const avail = window.innerWidth - (narrow() || !S.sideOpen ? 0 : 280);
+  const roomy = avail >= 880, show = isStudio() && roomy && S.paneOpen !== false;
+  btn.hidden = !roomy; btn.setAttribute('aria-pressed', show);
+  pane.hidden = !show; $('#app').classList.toggle('paneon', show);
+  if (!show) return;
+  const builds = cur ? cur.messages.filter(m => m.stage === 'builder' && !m.streaming && lastHtml(m.text)) : [];
+  const last = builds[builds.length - 1], code = last ? lastHtml(last.text) : '';
+  $('#gempty').hidden = !!code; $('#gframe').hidden = !code; $('#greload').disabled = $('#gfull').disabled = !code;
+  if (pane._code !== code) {
+    pane._code = code; $('#gframe').srcdoc = code || '';
+    $('#gver').textContent = code ? 'BUILD ' + String(builds.length).padStart(2, '0') + ' · ' + (last.mid || last.model || '') : '等待第一個版本';
+  }
+}
+function studioWelcome() {
+  const w = h('div', 'welcome');
+  w.append(h('div', 'kicker', 'GAME STUDIO'), h('h1', '', '想做什麼遊戲？'),
+    h('p', '', '三個模型分工：Planner 寫規格，Builder 寫出可直接玩的網頁遊戲，程式實際執行後由 Evaluator 審查，不通過就退回重做。上方可以替每個角色換模型。'));
+  const chips = h('div', 'chips');
+  [['接水果', '做一個接水果的小遊戲：水果從上方落下，左右移動籃子接住，漏接三個就結束，要有分數'],
+   ['打磚塊', '做一個打磚塊遊戲，有三種顏色的磚塊、計分和三條命'],
+   ['翻牌記憶', '做一個 4×4 翻牌記憶遊戲，記錄步數和花費時間'],
+   ['貪食蛇', '做一個貪食蛇，可以用滑動手勢或方向鍵控制，速度會越來越快']].forEach(([a, b]) => {
+    const c = h('button'); c.append(a, h('small', '', b)); c.onclick = () => { $('#input').value = b; grow(); $('#input').focus(); updateSend(); }; chips.append(c);
+  });
+  w.append(chips);
+  return w;
+}
+$('#paneBtn').onclick = () => { S.paneOpen = S.paneOpen === false; saveS(); updatePane(); };
+$('#gclose').onclick = () => { S.paneOpen = false; saveS(); updatePane(); };
+$('#greload').onclick = () => { const p = $('#gpane'); $('#gframe').srcdoc = p._code || ''; };
+$('#gfull').onclick = () => { if ($('#gpane')._code) openPreview($('#gpane')._code); };
+window.addEventListener('resize', () => updatePane());
 
 async function submit() {
   if (busy) { gameAbort = true; busy.ctrl.abort(); return; }
   const inp = $('#input'), text = inp.value.trim();
   if (!text && !pending.length) return;
   if (!activeKeys().length) { openSettings(); toast('請先填入 API 金鑰'); return; }
-  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; chats.push(cur); S.last = cur.id; saveS(); }
+  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; if (studioNew) { cur.kind = 'game'; cur.gem = ''; studioNew = false; } chats.push(cur); S.last = cur.id; saveS(); }
   if (editing) { const i = cur.messages.findIndex(m => m.id === editing); if (i >= 0) cur.messages.length = i; editing = null; $('#banner').hidden = true; }
   const u = { id: uid(), role: 'user', text, atts: pending };
   const m = { id: uid(), role: 'model', text: '' }; if (S.imgMode) m.img = true;
   cur.messages.push(u, m);
   pending = []; inp.value = ''; grow(); renderAtts(); clearDraft('new'); clearDraft(cur.id);
   renderChat(); renderList();
-  if (S.gameMode && !S.imgMode) return runGame(cur, u, m);
+  if (cur.kind === 'game') return runGame(cur, u, m);
   await run(cur, m);
 }
 function versionsOf(m) {
@@ -1348,7 +1494,7 @@ $('#chatList').addEventListener('click', async e => {
   }
 });
 
-$('#newChat').onclick = newChat; $('#newChat2').onclick = newChat;
+$('#newChat').onclick = newChat; $('#newChat2').onclick = () => isStudio() ? newGame() : newChat(); $('#newGame').onclick = newGame;
 $('#search').oninput = renderList;
 $('#sideToggle').onclick = () => { if (narrow()) $('#app').classList.toggle('drawer'); else { S.sideOpen = !S.sideOpen; saveS(); applySide(); } };
 $('#scrim').onclick = closeDrawer;
@@ -1395,7 +1541,6 @@ $('#attach').onclick = () => $('#file').click();
 $('#file').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
 $('#searchToggle').onclick = () => { S.search = !S.search; saveS(); $('#searchToggle').setAttribute('aria-pressed', S.search); };
 $('#gemSel').onchange = e => { if (cur) { cur.gem = e.target.value; persist(cur); } else { S.gem = e.target.value; saveS(); } };
-$('#gameToggle').onclick = () => { S.gameMode = !S.gameMode; saveS(); applyGameMode(); if (S.gameMode) toast('製作遊戲模式：Planner → Builder → Evaluator'); };
 $('#imgToggle').onclick = () => { S.imgMode = !S.imgMode; saveS(); applyImgMode(); };
 $('#imgModel').onchange = e => { S.imgModel = e.target.value; saveS(); };
 $('#aspect').onchange = e => { S.aspect = e.target.value; saveS(); };
@@ -1432,13 +1577,7 @@ async function loadModels(quiet) {
 function openSettings() {
   $('#provider').value = S.provider; $('#vkey').value = S.vkey; $('#vproject').value = S.vproject; $('#vlocation').value = S.vlocation; showProvider();
   $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; $('#diagrams').checked = S.diagrams;
-  [['gmPlanner', 'planner'], ['gmBuilder', 'builder'], ['gmEvaluator', 'evaluator']].forEach(([id, k]) => {
-    const sel = $('#' + id), list = modelList().slice(); sel.innerHTML = '';
-    if (!list.some(m => m.id === S.gameModels[k])) list.unshift({ id: S.gameModels[k], name: S.gameModels[k] });
-    list.forEach(m => { const o = h('option', '', m.name); o.value = m.id; sel.append(o); });
-    sel.value = S.gameModels[k]; sel.onchange = e => { S.gameModels[k] = e.target.value; saveS(); applyGameMode(); };
-  });
-  $('#gmRounds').value = String(S.gameRounds); $('#gmRounds').onchange = e => { S.gameRounds = Number(e.target.value); saveS(); }; gemEditorFill();
+  gemEditorFill();
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
   $('#fx').value = S.fx; $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
   $('#modal').hidden = false; closeDrawer(); fit(); $('.sheet .body').scrollTop = 0;
@@ -1558,6 +1697,7 @@ document.addEventListener('keydown', e => {
 /* ---------- 螢幕鍵盤：讓版面跟著可視區域縮放 ---------- */
 const vv = window.visualViewport;
 enhance($('#model'), 'up'); enhance($('#think'), 'up'); enhance($('#gemSel'), 'down');
+['pmPlanner', 'pmBuilder', 'pmEvaluator', 'pmRounds'].forEach(id => enhance($('#' + id), 'down'));
 function fit() { const vh = vv ? vv.height : window.innerHeight; document.documentElement.style.setProperty('--vh', vh + 'px'); $('#app').classList.toggle('compact', vh < 560); if (vv) window.scrollTo(0, 0); if (stick) toBottom(); }
 if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
 window.addEventListener('resize', fit);
@@ -1568,6 +1708,8 @@ window.addEventListener('resize', fit);
   $('#searchToggle').setAttribute('aria-pressed', S.search);
   await DB.open();
   chats = await DB.all();
+  chats.forEach(c => { if (!c.kind && c.messages.some(m => m.stage)) c.kind = 'game'; });
+  delete S.gameMode;
   cur = chats.find(c => c.id === S.last) || null;
   renderList(); renderChat(); loadDraft();
   if ('serviceWorker' in navigator && location.protocol === 'https:' && /\.github\.io$/.test(location.hostname)) navigator.serviceWorker.register('sw.js').catch(() => {});
