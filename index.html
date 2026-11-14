@@ -1067,7 +1067,7 @@ const DIAGRAM_RULES = [
 
 async function run(chat, msg, opts) {
   if (msg.img) return runImage(chat, msg);
-  const MODEL = (opts && opts.model) || MODEL;
+  const MODEL = (opts && opts.model) || S.model;
   const keys = activeKeys();
   const idx = chat.messages.indexOf(msg);
   const body = { contents: opts && opts.contents ? opts.contents : toContents(chat.messages.slice(0, idx)) };
