@@ -12,8 +12,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://generativelanguage.googleapis.com" crossorigin>
-<script>try { var t = (JSON.parse(localStorage.getItem('gh.settings') || '{}').theme) || 'auto'; if (t !== 'auto') document.documentElement.setAttribute('data-theme', t); } catch (e) {}</script>
+<script>try { var t = (JSON.parse(localStorage.getItem('gh.settings') || '{}').theme) || 'auto'; if (t !== 'auto') document.documentElement.setAttribute('data-theme', t); var f = (JSON.parse(localStorage.getItem('gh.settings') || '{}').font) || 'claude'; if (f !== 'system') document.documentElement.setAttribute('data-font', f); } catch (e) {}</script>
 <title>Gemini 對話台</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <style>
@@ -24,6 +26,7 @@
   --danger:#b3261e; --code-bg:#f0f4f9;
   --s1:#b55d00; --s2:#188038; --s3:#8430ce; --s4:#80868b;
   --sans:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --read:var(--sans);   /* 回覆內文的字體，依設定切換 */
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   color-scheme:light;
 }
@@ -115,6 +118,12 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 
 .msg.model{min-width:0}
 .md{overflow-wrap:anywhere}
+.msg.model>.md{font-family:var(--read)}
+:root[data-font="claude"]{--read:"Source Serif 4","Iowan Old Style",Georgia,"PingFang TC","Noto Sans TC","Microsoft JhengHei",serif}
+:root[data-font="serif"]{--read:"Source Serif 4","Iowan Old Style",Georgia,"Noto Serif TC","Songti TC",serif}
+:root[data-font="claude"] .msg.model>.md,:root[data-font="serif"] .msg.model>.md{font-size:16.5px;line-height:1.72;letter-spacing:.005em}
+:root[data-font="claude"] .msg.model>.md :is(h1,h2,h3,h4),:root[data-font="serif"] .msg.model>.md :is(h1,h2,h3,h4){font-weight:600;letter-spacing:-.005em}
+#app.studio .msg.model>.md{font-family:var(--sans)}
 .md>:first-child{margin-top:0}.md>:last-child{margin-bottom:0}
 .blk{display:contents}
 .md>.blk:first-child>:first-child{margin-top:0}.md>.blk:last-child>:last-child{margin-bottom:0}
@@ -304,6 +313,9 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 #pipe .node[data-st="run"]{transform:scale(1.035);border-color:#fff;box-shadow:0 0 0 2px #fff,0 0 28px var(--glow),0 12px 30px rgba(0,0,0,.35)}
 #pipe .node[data-st="run"] .nl i{background:#fff;box-shadow:0 0 10px #fff;animation:blink 1.2s ease-in-out infinite}
 #pipe .node[data-st="run"] .ns{color:#fff}
+#pipe .node[data-st="skip"]{opacity:.42}
+#pipe .node[data-st="clean"] .nl i{background:var(--pass);box-shadow:0 0 10px var(--pass)}
+#pipe .node[data-st="clean"] .ns{color:var(--pass)}
 #pipe .node[data-st="done"] .nl i{background:#cfe0ff}
 #pipe .node[data-st="pass"]{border-color:rgba(127,227,255,.55);box-shadow:0 0 22px rgba(127,227,255,.18)}
 #pipe .node[data-st="pass"] .nl i{background:var(--pass);box-shadow:0 0 10px var(--pass)}
@@ -379,6 +391,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       <select id="gemSel" aria-label="Skill"></select>
       <div class="ptools" id="ptools" hidden>
         <select id="pmRounds" aria-label="退回修正次數上限"><option value="0">不退回修正</option><option value="1">修正 1 次</option><option value="2">修正 2 次</option><option value="3">修正 3 次</option></select>
+        <button class="pbtn" id="leanBtn" aria-pressed="false">精簡流程</button>
         <button class="pbtn" id="paneBtn" aria-pressed="true">預覽</button>
       </div>
       <button class="icon" id="newChat2" aria-label="新對話"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
@@ -472,6 +485,9 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <small>估價依 Gemini API 公開牌價計算，不含快取折扣、Google 搜尋費用與免費額度，實際金額以帳單為準。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="enterSend"><label for="enterSend">按 Enter 送出（Shift + Enter 換行）</label></div>
         <small>接實體鍵盤時：⌘ + Enter 送出、⌘ + Shift + O 新對話、⌘ + K 搜尋對話、Esc 停止回覆、輸入框空白時按 ↑ 編輯上一則提問。</small></div>
+      <div class="f"><label for="font">回覆字體</label>
+        <select id="font"><option value="claude">Claude 風格（英文與數字用襯線體）</option><option value="serif">書卷風（中英文都用襯線體）</option><option value="system">系統字體</option></select>
+        <small>Claude 使用的是 Anthropic 自有字體，無法授權放進網頁，這裡用風格最接近的免費字體 Source Serif 4；中文在 Claude 風格下維持蘋方，書卷風則改用思源宋體。遊戲工作室不受影響。</small></div>
       <div class="f"><label for="theme">外觀</label>
         <select id="theme"><option value="auto">跟隨系統</option><option value="light">淺色</option><option value="dark">深色</option></select></div>
       <div class="f"><span class="lab">資料</span>
@@ -534,7 +550,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, diagrams:true, gameMode:false, gameModels:{ planner:'gemini-4-carbon', builder:'gemini-4-hydrogen', evaluator:'gemini-3.8-flash' }, gameRounds:2, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, font:'claude', thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, diagrams:true, gameMode:false, gameLean:false, gameModels:{ planner:'gemini-4-carbon', builder:'gemini-4-hydrogen', evaluator:'gemini-3.8-flash' }, gameRounds:2, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
@@ -696,7 +712,16 @@ async function copyText(t) {
   try { await navigator.clipboard.writeText(t); toast('已複製'); }
   catch { const a = h('textarea'); a.value = t; document.body.append(a); a.select(); try { document.execCommand('copy'); toast('已複製'); } catch { toast('無法複製'); } a.remove(); }
 }
-function applyTheme() { const r = document.documentElement; if (S.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme); }
+function applyTheme() { const r = document.documentElement; if (S.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme); applyFont(); }
+function applyFont() {
+  const f = S.font || 'claude', r = document.documentElement;
+  if (f === 'system') r.removeAttribute('data-font'); else r.setAttribute('data-font', f);
+  const need = f === 'system' ? '' : 'https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400..700;1,8..60,400..700' + (f === 'serif' ? '&family=Noto+Serif+TC:wght@400;600;700' : '') + '&display=swap';
+  let l = document.getElementById('fontcss');
+  if (!need) { if (l) l.remove(); return; }
+  if (!l) { l = document.createElement('link'); l.id = 'fontcss'; l.rel = 'stylesheet'; document.head.append(l); }
+  if (l.href !== need) l.href = need;
+}
 const narrow = () => window.matchMedia('(max-width:899px)').matches;
 function applySide() { $('#app').classList.toggle('collapsed', !S.sideOpen); if (typeof updatePane === 'function') updatePane(); }
 function closeDrawer() { $('#app').classList.remove('drawer'); }
@@ -1289,7 +1314,7 @@ function smokeTest(code) {
 }
 const GAME_SYS = {
   planner: '你是遊戲製作團隊的 Planner（企劃）。根據使用者的需求寫出精簡、可直接實作的規格，用繁體中文、Markdown 條列，不要寫程式碼。內容包含：1. 遊戲概念（一兩句）2. 玩法與規則 3. 操作方式（必須同時支援觸控與鍵盤，主要在 iPad Safari 上玩）4. 畫面與美術方向（只用 Canvas 或 DOM 繪製，不依賴外部圖片、音檔與函式庫）5. 功能清單（依優先順序，範圍要小到一次能做完）6. 驗收條件（5 到 10 條可以從程式碼或實際操作檢查的具體條件）。若已有現行版本，針對使用者的新要求寫出「這次要改什麼」與更新後的驗收條件，不要推翻沒被要求更動的部分。',
-  builder: '你是遊戲製作團隊的 Builder（工程師）。依照 Planner 的規格實作遊戲。規則：輸出一個 ```html 程式碼區塊，內含完整、可直接執行的單一 HTML 檔（HTML、CSS、JavaScript 全部內嵌），不使用任何外部資源或函式庫；必須支援觸控與鍵盤操作，畫面自動適應螢幕大小，適合 iPad Safari；不使用 alert、confirm、prompt、localStorage；一律輸出完整檔案，不可省略或寫「其餘不變」。若收到 Evaluator 的修正意見或執行錯誤，逐項修正後再輸出完整的新版本。程式碼區塊之前用兩三行說明這一版做了什麼，之後不要再多寫。',
+  builder: '你是遊戲製作團隊的 Builder（工程師）。依照 Planner 的規格實作遊戲；沒有規格時，直接依使用者的需求實作，自行補上合理的玩法細節，範圍保持小而完整。規則：輸出一個 ```html 程式碼區塊，內含完整、可直接執行的單一 HTML 檔（HTML、CSS、JavaScript 全部內嵌），不使用任何外部資源或函式庫；必須支援觸控與鍵盤操作，畫面自動適應螢幕大小，適合 iPad Safari；不使用 alert、confirm、prompt、localStorage；一律輸出完整檔案，不可省略或寫「其餘不變」。若收到 Evaluator 的修正意見或執行錯誤，逐項修正後再輸出完整的新版本。程式碼區塊之前用兩三行說明這一版做了什麼，之後不要再多寫。',
   evaluator: '你是遊戲製作團隊的 Evaluator（審查員），要嚴格但務實。你會拿到規格、Builder 的完整程式碼，以及程式在瀏覽器實際執行幾秒收集到的錯誤。逐條檢查驗收條件，並找出會讓遊戲無法遊玩的問題（語法或執行錯誤、無法操作、觸控無效、遊戲無法開始或結束、畫面超出螢幕）。輸出格式：第一行只寫 PASS 或 FAIL。接著用繁體中文條列：通過時簡短列出已確認的項目與可選的改進建議；不通過時列出「必須修正」的具體問題（指出位置與修法），不要重寫整份程式碼。只有會影響遊玩或違反驗收條件的問題才判 FAIL，純粹的美化建議不算。'
 };
 let gameAbort = false;
@@ -1309,23 +1334,34 @@ async function runGame(chat, userMsg, firstMsg) {
     return m;
   };
   gameAbort = false;
-  // 1. Planner
-  const plan = await stage('planner', 1, [...imgs, { text: (prevPlan ? '【目前的規格】\n' + prevPlan.text + '\n\n' : '') + (code ? '【現行版本的程式碼】\n```html\n' + code + '\n```\n\n' : '') + '【使用者的需求】\n' + want }], firstMsg);
-  if (!ok(plan)) return;
+  const lean = !!S.gameLean;
+  // 1. Planner（精簡流程略過）
+  let spec;
+  if (lean) spec = '【使用者的需求】\n' + want + (prevPlan ? '\n\n【先前的規格（供參考）】\n' + prevPlan.text : '');
+  else {
+    const plan = await stage('planner', 1, [...imgs, { text: (prevPlan ? '【目前的規格】\n' + prevPlan.text + '\n\n' : '') + (code ? '【現行版本的程式碼】\n```html\n' + code + '\n```\n\n' : '') + '【使用者的需求】\n' + want }], firstMsg);
+    if (!ok(plan)) return;
+    spec = '【規格】\n' + plan.text;
+    firstMsg = null;
+  }
   let feedback = '', verdict = '';
   const rounds = Math.max(0, Number(S.gameRounds) || 0) + 1;
   for (let r = 1; r <= rounds; r++) {
     // 2. Builder
-    const build = await stage('builder', r, [{ text: '【規格】\n' + plan.text + (code ? '\n\n【現行版本的程式碼】\n```html\n' + code + '\n```' : '') + (feedback ? '\n\n【必須修正的問題】\n' + feedback : '') + '\n\n請輸出完整的單一 HTML 檔。' }]);
+    const build = await stage('builder', r, [...(lean && r === 1 ? imgs : []), { text: spec + (code ? '\n\n【現行版本的程式碼】\n```html\n' + code + '\n```' : '') + (feedback ? '\n\n【必須修正的問題】\n' + feedback : '') + '\n\n請輸出完整的單一 HTML 檔。' }], r === 1 && firstMsg ? firstMsg : undefined);
     if (!ok(build)) return;
     const html = lastHtml(build.text);
     if (!html) { build.note = '沒有找到完整的 HTML 程式碼，流程中止。可以按「重新產生」再試。'; refreshMsg(build); await persist(chat); return; }
     code = html; if (cur === chat) updatePane();
     // 3. 實際執行檢查
     const errs = await smokeTest(code); if (gameAbort) return;
+    if (lean && !errs.length) {
+      build.leanOk = true; build.note = '實際執行檢查：2 秒內沒有錯誤。精簡流程不另外審查，可以開始玩了。想修改的地方直接輸入。';
+      refreshMsg(build); break;
+    }
     build.note = errs.length ? '實際執行檢查發現 ' + errs.length + ' 個錯誤，已交給 Evaluator。' : '實際執行檢查：2 秒內沒有錯誤。'; refreshMsg(build);
     // 4. Evaluator
-    const ev = await stage('evaluator', r, [{ text: '【規格】\n' + plan.text + '\n\n【Builder 的程式碼】\n```html\n' + code + '\n```\n\n【瀏覽器實際執行 2 秒收集到的錯誤】\n' + (errs.length ? errs.map(e => '- ' + e).join('\n') : '（沒有錯誤）') }]);
+    const ev = await stage('evaluator', r, [{ text: spec + '\n\n【Builder 的程式碼】\n```html\n' + code + '\n```\n\n【瀏覽器實際執行 2 秒收集到的錯誤】\n' + (errs.length ? errs.map(e => '- ' + e).join('\n') : '（沒有錯誤）') }]);
     if (!ok(ev)) return;
     verdict = /^[\s*#`>]*PASS\b/i.test(ev.text) ? 'PASS' : 'FAIL';
     if (verdict === 'PASS') { ev.note = '審查通過，可以開始玩了（右側預覽或 Builder 回覆下方的「試玩」）。想修改的地方直接輸入。'; refreshMsg(ev); break; }
@@ -1360,6 +1396,7 @@ function fillPipe() {
   });
   const r = $('#pmRounds'); if (r.value !== String(S.gameRounds)) { r.value = String(S.gameRounds); r.dispatchEvent(new Event('change')); }
   r.onchange = e => { S.gameRounds = Number(e.target.value); saveS(); };
+  $('#leanBtn').setAttribute('aria-pressed', !!S.gameLean);
 }
 function renderPipe() {
   if (!isStudio()) return;
@@ -1368,10 +1405,13 @@ function renderPipe() {
   ['planner', 'builder', 'evaluator'].forEach(k => {
     const m = after.filter(x => x.stage === k).pop(), node = $('#pipe .node[data-k="' + k + '"]');
     let s = 'idle';
-    if (m) s = m.streaming ? 'run' : (m.error || (!m.text && m.note)) ? 'fail' : k === 'evaluator' ? (/^[\s*#`>]*PASS\b/i.test(m.text) ? 'pass' : 'fail') : 'done';
+    const lb = after.filter(x => x.stage === 'builder').pop();
+    if (k === 'evaluator' && lb && lb.leanOk && (!m || after.indexOf(lb) > after.indexOf(m))) s = 'clean';
+    else if (m) s = m.streaming ? 'run' : (m.error || (!m.text && m.note)) ? 'fail' : k === 'evaluator' ? (/^[\s*#`>]*PASS\b/i.test(m.text) ? 'pass' : 'fail') : 'done';
+    else if (k === 'planner' && (S.gameLean || after.some(x => x.stage))) s = 'skip';
     st[k] = s;
     node.dataset.st = s;
-    node.querySelector('.ns').textContent = ({ idle: '待命', run: '進行中', done: '完成', pass: '通過', fail: k === 'evaluator' ? '退回修正' : '失敗' })[s] + (m && m.round > 1 ? ' · 第 ' + m.round + ' 輪' : '');
+    node.querySelector('.ns').textContent = ({ idle: S.gameLean && k === 'evaluator' ? '有錯誤時才審查' : '待命', skip: '精簡流程略過', clean: '執行無誤，略過審查', run: '進行中', done: '完成', pass: '通過', fail: k === 'evaluator' ? '退回修正' : '失敗' })[s] + (m && m.round > 1 ? ' · 第 ' + m.round + ' 輪' : '');
   });
   document.querySelectorAll('#pipe .link').forEach(l => l.classList.toggle('on', st[l.dataset.k] === 'run'));
 }
@@ -1408,6 +1448,10 @@ function studioWelcome() {
   w.append(shelf);
   return w;
 }
+$('#leanBtn').onclick = () => {
+  S.gameLean = !S.gameLean; saveS(); fillPipe(); renderPipe();
+  toast(S.gameLean ? '精簡流程：略過 Planner，執行沒有錯誤就直接完成' : '完整流程：Planner → Builder → Evaluator');
+};
 $('#paneBtn').onclick = () => { S.paneOpen = S.paneOpen === false; saveS(); updatePane(); };
 $('#gclose').onclick = () => { S.paneOpen = false; saveS(); updatePane(); };
 $('#greload').onclick = () => { const p = $('#gpane'); $('#gframe').srcdoc = p._code || ''; };
@@ -1605,7 +1649,7 @@ function openSettings() {
   $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; $('#diagrams').checked = S.diagrams;
   gemEditorFill();
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
-  $('#fx').value = S.fx; $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme;
+  $('#fx').value = S.fx; $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme; $('#font').value = S.font || 'claude';
   $('#modal').hidden = false; closeDrawer(); fit(); $('.sheet .body').scrollTop = 0;
 }
 function closeSettings() { $('#modal').hidden = true; if (cur === null || !cur.messages.length) renderChat(); }
@@ -1660,6 +1704,7 @@ $('#fx').onchange = e => { const v = parseFloat(e.target.value); if (v > 0) S.fx
 $('#thoughts').onchange = e => { S.thoughts = e.target.checked; saveS(); };
 $('#enterSend').onchange = e => { S.enterSend = e.target.checked; saveS(); };
 $('#theme').onchange = e => { S.theme = e.target.value; saveS(); applyTheme(); };
+$('#font').onchange = e => { S.font = e.target.value; saveS(); applyFont(); };
 $('#exportBtn').onclick = () => {
   const blob = new Blob([JSON.stringify({ app: 'gemini-harness', version: 1, exported: new Date().toISOString(), chats }, null, 1)], { type: 'application/json' });
   const a = h('a'); a.href = URL.createObjectURL(blob); a.download = 'gemini-chats-' + new Date().toISOString().slice(0, 10) + '.json';
