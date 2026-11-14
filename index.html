@@ -349,10 +349,6 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <input id="gemName" type="text" placeholder="名稱" aria-label="Skill 名稱">
         <textarea id="gemPrompt" placeholder="這個 Skill 的指示，例如角色、語氣、輸出格式" aria-label="Skill 指示" style="min-height:130px"></textarea>
         <small>在對話上方的「Skill」選單切換，每個對話各自記住。Skill 的指示會接在系統指示後面一起送出。</small></div>
-      <div class="f"><label for="memory">記憶</label>
-        <textarea id="memory" placeholder="寫下希望模型一直記得的事，一行一項。例如：我是大學生，正在修數位訊號處理。" style="min-height:110px"></textarea>
-        <div class="row"><input type="checkbox" id="useMemory"><label for="useMemory" style="font-weight:400">在每次對話中使用記憶</label></div>
-        <small>記憶只存在這台裝置，每次送出時附在系統指示裡，所有對話共用。</small></div>
       <div class="f"><span class="lab">製作遊戲模式</span>
         <div class="row"><label for="gmPlanner" style="font-weight:400;width:5.5em">Planner</label><select id="gmPlanner" style="flex:1;width:auto"></select></div>
         <div class="row"><label for="gmBuilder" style="font-weight:400;width:5.5em">Builder</label><select id="gmBuilder" style="flex:1;width:auto"></select></div>
@@ -365,9 +361,9 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
         <small>把可調整的安全過濾設為關閉，減少回覆被擋下而變成空白。Google 固定的禁止內容規則不受影響。</small></div>
       <div class="f"><div class="row"><input type="checkbox" id="noEmoji"><label for="noEmoji">回覆不使用 emoji</label></div>
         <small>會請模型不要用 emoji；模型仍然用了的話，顯示時也會自動去掉（程式碼內不受影響）。</small></div>
-      <div class="f"><label for="system">系統指示</label>
-        <textarea id="system" placeholder="例如：一律使用繁體中文回答；數學式用 LaTeX。"></textarea>
-        <small>每次對話都會附上。</small></div>
+      <div class="f"><label for="system">個人指示</label>
+        <textarea id="system" placeholder="寫下希望模型一直記得的事與回答方式，一行一項。例如：&#10;- 我是大學生，正在修數位訊號處理&#10;- 一律用繁體中文回答，數學式用 LaTeX" style="min-height:140px"></textarea>
+        <small>每次送出都會附上，所有對話共用（製作遊戲模式也會參考），只存在這台裝置。</small></div>
       <div class="f"><span class="lab">溫度</span>
         <div class="row"><input type="checkbox" id="useTemp"><label for="useTemp" style="font-weight:400">自訂</label><input type="range" id="temp" min="0" max="2" step="0.1"><span id="tempVal" style="width:2.2em;text-align:right;font-variant-numeric:tabular-nums"></span></div>
         <small>未勾選時使用模型預設值。</small></div>
@@ -449,7 +445,12 @@ const DEFAULT_GEMS = [
   { id: 'english', name: '英語口說家教', prompt: 'You are my private English speaking tutor. My level is around TOEIC 600. Talk with me in simple, natural spoken English, one short turn at a time, and end each turn with one question so I keep talking. After each of my replies, first point out my mistakes: show the corrected sentence and a one-line explanation in Traditional Chinese, plus one more natural way to say it. Then continue the conversation. Do not write long paragraphs.' },
   { id: 'code', name: '程式助手', prompt: '你是程式助手，用繁體中文說明。請提供可以直接使用的完整程式碼，不要省略或用「其餘不變」帶過；修改既有程式時輸出完整的新版本。網頁與 userscript 以單一檔案為主，並考慮 iPad Safari 的相容性。先給程式碼，再用幾行說明重點與使用方式。' }
 ];
-if (typeof S.memory !== 'string') S.memory = '- 我在台灣，請用繁體中文與台灣慣用的詞彙回答。';
+if (!S.merged) {
+  // 舊版的「記憶」與「系統指示」合併成「個人指示」
+  const mem = typeof S.memory === 'string' ? S.memory : '- 我在台灣，請用繁體中文與台灣慣用的詞彙回答。';
+  if (S.useMemory !== false && mem.trim() && !S.system.includes(mem.trim())) S.system = [mem.trim(), S.system.trim()].filter(Boolean).join('\n');
+  delete S.memory; delete S.useMemory; S.merged = true;
+}
 if (!Array.isArray(S.gems)) S.gems = JSON.parse(JSON.stringify(DEFAULT_GEMS));
 const gemOf = id => S.gems.find(g => g.id === id);
 /* 兩種服務：studio = Gemini API（AI Studio 金鑰）；vertex = Google Cloud 的 Vertex AI / Agent Platform 金鑰 */
@@ -1071,9 +1072,8 @@ async function run(chat, msg, opts) {
   const keys = activeKeys();
   const idx = chat.messages.indexOf(msg);
   const body = { contents: opts && opts.contents ? opts.contents : toContents(chat.messages.slice(0, idx)) };
-  const gem = gemOf(chat.gem), mem = S.useMemory && S.memory.trim();
-  const sys = opts && opts.sys ? [opts.sys, S.memory.trim() && S.useMemory && '使用者的背景資訊：\n' + S.memory.trim()].filter(Boolean).join('\n\n') : [S.system.trim(),
-    mem && '以下是使用者希望你記住的資訊，回答時自然參考，不必特別提起：\n' + mem,
+  const gem = gemOf(chat.gem), mine = S.system.trim();
+  const sys = opts && opts.sys ? [opts.sys, mine && '使用者的背景資訊與偏好（與上述角色規則衝突時以角色規則為準）：\n' + mine].filter(Boolean).join('\n\n') : [mine,
     S.diagrams && DIAGRAM_RULES,
     S.noEmoji && '回覆中不要使用任何 emoji 或表情符號（包括標題、條列與結尾），改用一般文字與 Markdown 格式。',
     gem && gem.prompt.trim()].filter(Boolean).join('\n\n');
@@ -1431,7 +1431,7 @@ async function loadModels(quiet) {
 }
 function openSettings() {
   $('#provider').value = S.provider; $('#vkey').value = S.vkey; $('#vproject').value = S.vproject; $('#vlocation').value = S.vlocation; showProvider();
-  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#memory').value = S.memory; $('#useMemory').checked = S.useMemory; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; $('#diagrams').checked = S.diagrams;
+  $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; $('#diagrams').checked = S.diagrams;
   [['gmPlanner', 'planner'], ['gmBuilder', 'builder'], ['gmEvaluator', 'evaluator']].forEach(([id, k]) => {
     const sel = $('#' + id), list = modelList().slice(); sel.innerHTML = '';
     if (!list.some(m => m.id === S.gameModels[k])) list.unshift({ id: S.gameModels[k], name: S.gameModels[k] });
@@ -1466,8 +1466,6 @@ $('#refreshModels').onclick = () => loadModels(false);
 $('#builtinModels').onclick = () => { if (isVertex()) { S.vmodels = null; if (!VERTEX_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); return toast('已改用內建清單'); } S.models = FALLBACK_MODELS; S.modelsAt = Date.now(); if (!S.models.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; saveS(); modelOptions(); toast('已改用內建清單'); };
 $('#customModel').onchange = e => { S.customModel = e.target.value.trim(); if (S.customModel) S.model = S.customModel; saveS(); modelOptions(); };
 $('#system').onchange = e => { S.system = e.target.value; saveS(); };
-$('#memory').onchange = e => { S.memory = e.target.value; saveS(); };
-$('#useMemory').onchange = e => { S.useMemory = e.target.checked; saveS(); };
 $('#diagrams').onchange = e => { S.diagrams = e.target.checked; saveS(); };
 $('#lenient').onchange = e => { S.lenient = e.target.checked; saveS(); };
 $('#noEmoji').onchange = e => { S.noEmoji = e.target.checked; saveS(); renderChat(); };
