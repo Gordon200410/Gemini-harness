@@ -14,7 +14,6 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" id="pixfont">
 <link rel="preconnect" href="https://generativelanguage.googleapis.com" crossorigin>
 <script>try { var t = (JSON.parse(localStorage.getItem('gh.settings') || '{}').theme) || 'auto'; if (t !== 'auto') document.documentElement.setAttribute('data-theme', t); var f = (JSON.parse(localStorage.getItem('gh.settings') || '{}').font) || 'claude'; if (f !== 'system') document.documentElement.setAttribute('data-font', f); } catch (e) {}</script>
 <title>Gemini 對話台</title>
@@ -124,7 +123,6 @@ header{display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-
 :root[data-font="serif"]{--read:"Source Serif 4","Iowan Old Style",Georgia,"Noto Serif TC","Songti TC",serif}
 :root[data-font="claude"] .msg.model>.md,:root[data-font="serif"] .msg.model>.md{font-size:16.5px;line-height:1.72;letter-spacing:.005em}
 :root[data-font="claude"] .msg.model>.md :is(h1,h2,h3,h4),:root[data-font="serif"] .msg.model>.md :is(h1,h2,h3,h4){font-weight:600;letter-spacing:-.005em}
-#app.studio .msg.model>.md{font-family:var(--sans)}
 .md>:first-child{margin-top:0}.md>:last-child{margin-bottom:0}
 .blk{display:contents}
 .md>.blk:first-child>:first-child{margin-top:0}.md>.blk:last-child>:last-child{margin-bottom:0}
@@ -276,18 +274,18 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 .pickmenu button i{width:18px;flex:none;font-style:normal;color:var(--accent)}
 .pickmenu button[aria-selected="true"]{font-weight:600}
 /* ===== 遊戲工作室：90 年代主機遊戲風格（黑底掃描線、藍色漸層視窗、白色斜角邊框、點陣字體），只套用在工作室 ===== */
-.btn.studio-btn{background:linear-gradient(180deg,#2b3fb8,#0b1468);color:#fff;border:2px solid #d9dce8;border-radius:6px;font:400 15px/1 "DotGothic16",var(--sans);letter-spacing:.06em;gap:8px;text-shadow:1px 1px 0 #000;box-shadow:inset 0 0 0 1px #000}
+.btn.studio-btn{background:linear-gradient(180deg,#2b3fb8,#0b1468);color:#fff;border:2px solid #d9dce8;border-radius:6px;font:600 15px/1 var(--sans);letter-spacing:.04em;gap:8px;text-shadow:1px 1px 0 #000;box-shadow:inset 0 0 0 1px #000}
 .btn.studio-btn svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:square;stroke-linejoin:miter;shape-rendering:crispEdges}
 .btn.studio-btn circle{fill:#fff;stroke:none}
-.item .tag{font:400 8px/1 "Press Start 2P",monospace;color:#fff;background:linear-gradient(180deg,#2b3fb8,#0b1468);border:1px solid #d9dce8;border-radius:3px;padding:4px 4px 3px;flex:none}
+.item .tag{font:700 9.5px/1 var(--sans);letter-spacing:.1em;color:#fff;background:linear-gradient(180deg,#2b3fb8,#0b1468);border:1px solid #d9dce8;border-radius:3px;padding:4px 4px 3px;flex:none}
 #app.studio main,#app.studio #gpane{
   --win:linear-gradient(180deg,#2a3cb0 0%,#14217a 55%,#0a1150 100%);
   --bg:#050507; --surface:#14217a; --field:#0c1460; --ink:#f2f2f2; --muted:#b8bfd9; --line:#cfd3e2;
   --accent:#ffd84a; --accent-ink:#1a1400; --bubble:#3a3a44; --sel:#2a3cb0; --code-bg:#070b30; --danger:#ff6060;
   --s1:#ffd84a; --s2:#7dffb0; --s3:#9fb4ff; --s4:#8088a8; --run:#ffd84a; --pass:#7dffb0; --fail:#ff6060;
-  --pix:"DotGothic16","PingFang TC","Noto Sans TC",sans-serif; --pix8:"Press Start 2P","DotGothic16",monospace;
+  --pix:var(--sans); --pix8:var(--sans);
   color-scheme:dark; color:var(--ink); background:var(--bg); font-family:var(--pix);
-  -webkit-font-smoothing:none; -moz-osx-font-smoothing:unset}
+}
 #app.studio main{background:radial-gradient(120% 90% at 50% 40%,#16161c 0%,#060608 70%,#000 100%)}
 #app.studio main::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:6;
   background:repeating-linear-gradient(180deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
@@ -299,7 +297,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 #app.studio main>#toTop,#app.studio main>#toBottom{position:absolute;z-index:5}
 #app.studio header{min-height:58px}
 #app.studio #title{color:var(--ink);font:400 16px/1.2 var(--pix);display:flex;align-items:center;gap:12px;text-shadow:2px 2px 0 #000}
-#app.studio #title::before{content:'GAME STUDIO';font:400 9px/1 var(--pix8);color:var(--accent);text-shadow:2px 2px 0 #000;flex:none}
+#app.studio #title::before{content:'GAME STUDIO';font:800 11px/1 var(--pix8);letter-spacing:.14em;color:var(--accent);text-shadow:2px 2px 0 #000;flex:none}
 #app.studio.paneon #total{display:none}
 #app.studio.paneon #title::before{display:none}
 #app.studio #total{font-family:var(--pix);color:var(--muted)}
@@ -310,7 +308,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
   box-shadow:inset 1px 1px 0 rgba(255,255,255,.35),inset -1px -1px 0 rgba(0,0,0,.55),0 0 0 2px #000,4px 5px 0 rgba(0,0,0,.6)}
 #pipe{display:flex;align-items:stretch;gap:12px;padding:8px 18px 16px}
 #pipe .node{display:flex;flex-direction:column;gap:3px;padding:10px 12px 9px 26px;flex:1 1 0;min-width:0;position:relative}
-#pipe .nl{font:400 8.5px/1.2 var(--pix8);color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-shadow:1px 1px 0 #000}
+#pipe .nl{font:800 10.5px/1.2 var(--pix8);letter-spacing:.12em;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-shadow:1px 1px 0 #000}
 #pipe .nl i{display:none}
 #pipe .ns{font:400 13px/1.3 var(--pix);color:var(--muted);text-shadow:1px 1px 0 #000}
 #pipe .node .pick{width:100%}
@@ -337,13 +335,14 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 #app.studio .pickmenu button i{color:var(--accent)}
 #app.studio .pickmenu button[aria-selected="true"]{background:rgba(255,255,255,.12);font-weight:400}
 #app.studio .msg.model[data-stage]{padding:14px 16px 10px}
-#app.studio .stage{font:400 14px/1.3 var(--pix);letter-spacing:.04em;border:0;padding:0;margin-bottom:12px;color:var(--accent);background:none;text-shadow:2px 2px 0 #000;display:flex;gap:10px;align-items:center}
+#app.studio .stage{font:800 11px/1.3 var(--pix);letter-spacing:.14em;text-transform:uppercase;border:0;padding:0;margin-bottom:12px;color:var(--accent);background:none;text-shadow:1px 1px 0 #000;display:flex;gap:10px;align-items:center}
 #app.studio .msg[data-stage="evaluator"][data-verdict="pass"] .stage{color:var(--pass)}
 #app.studio .msg[data-verdict="fail"] .stage{color:var(--fail)}
-#app.studio .stage b{font:400 12px var(--pix);color:var(--muted)}
-#app.studio .msg.model>.md,#app.studio .bubble{font-family:var(--pix);font-size:16px;line-height:1.7;text-shadow:1px 1px 0 rgba(0,0,0,.7)}
-#app.studio .md :is(h1,h2,h3,h4){font-weight:400;color:var(--accent)}
-#app.studio .md strong{font-weight:400;color:var(--accent)}
+#app.studio .stage b{font:400 12px var(--pix);letter-spacing:0;color:var(--muted)}
+#app.studio .msg.model>.md{font-family:var(--read)}
+#app.studio .bubble{font-family:var(--pix);font-size:16px;line-height:1.7;text-shadow:1px 1px 0 rgba(0,0,0,.7)}
+#app.studio .md :is(h1,h2,h3,h4){color:var(--accent)}
+#app.studio .md strong{color:var(--accent)}
 #app.studio .bubble{background:linear-gradient(180deg,#4a4a56,#2a2a33);border-radius:7px}
 #app.studio .code{border:2px solid #000;border-radius:4px;background:#000;box-shadow:inset 0 0 0 1px #3a3f66}
 #app.studio .code .bar{font-family:var(--pix);border-bottom-color:#3a3f66}
@@ -357,8 +356,8 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 #app.studio .cbar .icon{border:2px solid #e6e8f0;border-radius:5px;color:#fff}
 #app.studio .hint{font-family:var(--pix);color:#6a6f85}
 #app.studio .welcome{max-width:720px;gap:16px}
-#app.studio .kicker{font:400 10px/1 var(--pix8);color:var(--accent);text-shadow:2px 2px 0 #000}
-#app.studio .welcome h1{font:400 34px/1.35 var(--pix);background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff;text-shadow:3px 3px 0 #1d2a9a,5px 5px 0 #000}
+#app.studio .kicker{font:800 12px/1 var(--pix8);letter-spacing:.2em;color:var(--accent);text-shadow:2px 2px 0 #000}
+#app.studio .welcome h1{font:700 36px/1.35 var(--pix);background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff;text-shadow:3px 3px 0 #1d2a9a,5px 5px 0 #000}
 #app.studio .welcome p{max-width:560px;font-family:var(--pix);color:var(--muted);text-shadow:1px 1px 0 #000}
 .shelf{display:flex;gap:16px;overflow-x:auto;padding:14px 6px 18px;margin:6px -6px 0;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
 .tile{flex:none;width:146px;display:flex;flex-direction:column;gap:9px;text-align:left;scroll-snap-align:start;font-family:var(--pix)}
@@ -370,7 +369,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 .tile:focus-visible{outline:none}
 #gpane{width:clamp(340px,34vw,600px);flex:none;border-left:2px solid #000;display:flex;flex-direction:column;background:#000 !important}
 #gpane .gbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px 18px;min-height:58px}
-#gver{font:400 8.5px/1.6 var(--pix8);color:var(--accent);text-shadow:2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gver{font:800 11px/1.6 var(--pix8);letter-spacing:.1em;color:var(--accent);text-shadow:2px 2px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #gpane .gtools{display:flex;gap:6px;flex:none}
 #gpane .gtools button:disabled{opacity:.35}
 #gpane .gtools button{font:400 13px/1 var(--pix);min-height:32px;padding:0 10px;color:#fff;background:var(--win);border:2px solid #e6e8f0;border-radius:5px;box-shadow:0 0 0 2px #000;text-shadow:1px 1px 0 #000}
@@ -1385,7 +1384,6 @@ const isStudio = () => cur ? cur.kind === 'game' : studioNew;
 function newGame() { newChat(); studioNew = true; renderChat(); if (!narrow()) $('#input').focus(); }
 function applyGameMode() {
   const on = isStudio();
-  if (on && !document.getElementById('pixfont')) { const l = document.createElement('link'); l.id = 'pixfont'; l.rel = 'stylesheet'; l.href = 'https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap'; document.head.append(l); }
   $('#app').classList.toggle('studio', on);
   $('#pipe').hidden = $('#ptools').hidden = !on;
   $('#gemSel').hidden = on;
