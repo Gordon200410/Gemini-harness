@@ -327,6 +327,42 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 #gframe{width:100%;height:100%;border:1px solid var(--line);border-radius:14px;background:#fff}
 #gempty{position:absolute;inset:0 14px calc(14px + env(safe-area-inset-bottom));display:grid;place-items:center;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px;font-size:14px;padding:24px;line-height:1.7}
 @media (prefers-reduced-motion:reduce){#pipe .node[data-st="run"] .nl i{animation:none}}
+/* ===== 程式代理 ===== */
+#abar{display:flex;align-items:center;gap:8px;padding:0 16px 10px;flex-wrap:wrap;position:relative;z-index:3}
+#abar .folder{display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 280px;border:1px solid var(--line);border-radius:12px;padding:4px 4px 4px 11px;background:var(--surface)}
+#abar .folder svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linejoin:round}
+#aroot{font-family:var(--mono);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;text-align:left;flex:1;min-width:0;color:var(--ink)}
+#abar .folder button{font-size:13px;min-height:32px;padding:0 11px;border-radius:9px;border:1px solid var(--line);background:var(--bg);flex:none}
+#abar .pickbtn{font-size:13px;min-height:36px}
+.msg.tool{margin-top:-12px;min-width:0}
+.msg.tool+.msg.tool{margin-top:-16px}
+.tcard{border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.tcard>summary{display:flex;align-items:center;gap:9px;padding:8px 12px;font-size:14px;cursor:pointer;list-style:none;min-height:40px}
+.tcard>summary::-webkit-details-marker{display:none}
+.tcard .ti{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.msg.tool[data-st="run"] .ti{background:var(--accent);animation:blink 1s infinite}
+.msg.tool[data-st="wait"] .ti{background:#f9ab00}
+.msg.tool[data-st="ok"] .ti{background:#34a853}
+.msg.tool[data-st="err"] .ti,.msg.tool[data-st="deny"] .ti{background:var(--danger)}
+.tcard .tv{font-weight:600;flex:none}
+.tcard .tt{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.tcard .ts{font-size:12px;color:var(--muted);flex:none}
+.tcard pre{margin:0;padding:10px 12px;border-top:1px solid var(--line);background:var(--code-bg);max-height:340px;overflow:auto;font:12.5px/1.55 var(--mono);white-space:pre-wrap;word-break:break-word}
+.tcard .lab{font-size:12px;color:var(--muted);padding:8px 12px 0;border-top:1px solid var(--line)}
+.tcard .lab+pre{border-top:0}
+.diff span{display:block}
+.diff .del{background:rgba(234,67,53,.13)}
+.diff .ins{background:rgba(52,168,83,.15)}
+.appr{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-top:1px solid var(--line);background:color-mix(in srgb,#f9ab00 8%,var(--surface))}
+.appr .q{font-size:13.5px;flex-basis:100%}
+.appr button{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;background:var(--bg)}
+.appr button.yes{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.todo{list-style:none;margin:0;padding:8px 12px 10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:4px;font-size:14px}
+.todo li{display:flex;gap:8px;align-items:flex-start}
+.todo li::before{content:'';width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;flex:none;margin-top:4px}
+.todo li.in_progress::before{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 35%,transparent 40%)}
+.todo li.completed{color:var(--muted);text-decoration:line-through}
+.todo li.completed::before{background:#34a853;border-color:#34a853}
 #toast{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:40;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
 </style>
@@ -336,6 +372,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
   <aside id="side" aria-label="對話清單">
     <div class="brand"><i></i>Gemini</div>
     <button class="btn primary" id="newChat">＋ 新對話</button>
+    <button class="btn studio-btn" id="newAgent" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="M7 9.5l3 2.5-3 2.5M12.5 15h4.5"/></svg>程式代理</button>
     <button class="btn studio-btn" id="newGame"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="7" width="19" height="11" rx="5.5"/><path d="M7.5 10.5v4M5.5 12.5h4"/><circle cx="15.5" cy="11.5" r="1"/><circle cx="18" cy="13.8" r="1"/></svg>遊戲工作室</button>
     <input id="search" type="search" placeholder="搜尋對話" autocomplete="off">
     <nav id="chatList"></nav>
@@ -355,6 +392,10 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       </div>
       <button class="icon" id="newChat2" aria-label="新對話"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
     </header>
+    <div id="abar" hidden>
+      <div class="folder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z"/></svg><code id="aroot">尚未選擇工作資料夾</code><button id="apick">選擇資料夾</button><button id="aopen">開啟</button></div>
+      <select id="amode" aria-label="核准方式"><option value="ask">每次詢問</option><option value="edits">自動允許修改檔案</option><option value="all">全部自動執行</option></select>
+    </div>
     <div id="pipe" hidden>
       <div class="node" data-k="planner" data-st="idle"><div class="nl"><i></i>01 PLANNER</div><select id="pmPlanner" aria-label="Planner 使用的模型"></select><select id="ptPlanner" aria-label="Planner 的思考程度"></select><div class="ns">待命</div></div>
       <span class="link" data-k="builder"></span>
@@ -509,7 +550,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, font:'claude', thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, diagrams:true, gameMode:false, gameLean:false, gameThink:{}, gameModels:{ planner:'gemini-4-carbon', builder:'gemini-4-hydrogen', evaluator:'gemini-3.8-flash' }, gameRounds:2, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, font:'claude', thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, diagrams:true, gameMode:false, gameLean:false, gameThink:{}, agentRoot:'', agentMode:'ask', gameModels:{ planner:'gemini-4-carbon', builder:'gemini-4-hydrogen', evaluator:'gemini-3.8-flash' }, gameRounds:2, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
@@ -557,6 +598,7 @@ const DB = {
 };
 
 /* ---------- 狀態 ---------- */
+let agentNew = false;    // 已按「程式代理」但還沒送出第一則
 let studioNew = false;   // 已按「遊戲工作室」但還沒送出第一則
 let chats = [];          // 全部對話
 let cur = null;          // 目前對話（null = 尚未建立的新對話）
@@ -695,6 +737,7 @@ function renderList() {
     const it = h('div', 'item' + (cur && c.id === cur.id ? ' on' : '')); it.dataset.id = c.id;
     const t = h('button', 't', c.title); t.dataset.act = 'open'; it.append(t);
     if (c.kind === 'game') it.append(h('span', 'tag', 'GAME'));
+    if (c.kind === 'agent') it.append(h('span', 'tag', 'CODE'));
     if (cur && c.id === cur.id) {
       const r = h('button', 'mini', '改名'); r.dataset.act = 'rename';
       const d = h('button', 'mini', '刪除'); d.dataset.act = 'delete';
@@ -851,6 +894,7 @@ function gemOptions() {
 }
 
 function welcome() {
+  if (isAgent() && activeKeys().length) return agentWelcome();
   if (isStudio() && activeKeys().length) return studioWelcome();
   const w = h('div', 'welcome');
   const hr = new Date().getHours();
@@ -884,7 +928,7 @@ function userEl(m) {
   }
   if (m.text) b.append(h('div', 'utext', m.text));
   const acts = h('div', 'acts');
-  [['copy', '複製'], ['edit', '編輯']].forEach(([a, t]) => { const x = h('button', '', t); x.dataset.act = a; acts.append(x); });
+  [['copy', '複製']].concat(cur && cur.kind === 'agent' ? [] : [['edit', '編輯']]).forEach(([a, t]) => { const x = h('button', '', t); x.dataset.act = a; acts.append(x); });
   el.append(b, acts);
   return el;
 }
@@ -924,7 +968,7 @@ function modelEl(m) {
     if (m.text) { const c = h('button', '', '複製'); c.dataset.act = 'copy'; acts.append(c); }
     if (m.text && window.speechSynthesis) { const v = h('button', '', speakId === m.id ? '停止朗讀' : '朗讀'); v.dataset.act = 'speak'; acts.append(v); }
     if (IMG_ENABLED && m.images && m.images.length) { const e = h('button', '', '修改這張圖'); e.dataset.act = 'editimg'; acts.append(e); }
-    const isLast = cur && cur.messages[cur.messages.length - 1] === m;
+    const isLast = cur && cur.kind !== 'agent' && cur.messages[cur.messages.length - 1] === m;
     if (isLast) { const r = h('button', '', m.error && !m.text ? '重試' : '重新產生'); r.dataset.act = 'regen'; acts.append(r); }
     if (m.alts && m.alts.length) {
       const n = m.alts.length + 1, i = m.ver == null ? n - 1 : m.ver, v = h('span', 'vers');
@@ -949,13 +993,13 @@ function modelEl(m) {
 
 function renderChat() {
   const box = $('#msgs'); box.innerHTML = ''; els.clear();
-  applyGameMode();
-  $('#title').textContent = cur ? cur.title : isStudio() ? '新遊戲' : '新對話'; showTotal();
+  applyGameMode(); applyAgentMode();
+  $('#title').textContent = cur ? cur.title : isStudio() ? '新遊戲' : isAgent() ? '新任務' : '新對話'; showTotal();
   document.title = (cur ? cur.title + ' · ' : '') + 'Gemini 對話台';
   gemOptions();
   const empty = !cur || !cur.messages.length; box.classList.toggle('empty', empty);
   if (empty) { box.append(welcome()); $('#toBottom').hidden = true; return; }
-  for (const m of cur.messages) { const el = m.role === 'user' ? userEl(m) : modelEl(m); els.set(m.id, el); box.append(el); }
+  for (const m of cur.messages) { if (m.silent) continue; const el = m.role === 'user' ? userEl(m) : m.role === 'tool' ? toolEl(m) : modelEl(m); els.set(m.id, el); box.append(el); }
   stick = true; toBottom(); renderPipe();
 }
 function toBottom() { const s = $('#scroll'); s.scrollTop = s.scrollHeight; $('#toBottom').hidden = true; }
@@ -1247,8 +1291,8 @@ async function autoTitle(chat) {
 }
 
 /* ---------- 動作 ---------- */
-function newChat() { saveDraft(true); stopSpeak(); if (busy) busy.ctrl.abort(); cur = null; studioNew = false; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); if (!narrow()) $('#input').focus(); }
-function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; saveDraft(true); stopSpeak(); cur = c; studioNew = false; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); }
+function newChat() { saveDraft(true); stopSpeak(); if (busy) busy.ctrl.abort(); cur = null; studioNew = false; agentNew = false; editing = null; $('#banner').hidden = true; S.last = ''; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); if (!narrow()) $('#input').focus(); }
+function openChat(id) { const c = chats.find(x => x.id === id); if (!c) return; saveDraft(true); stopSpeak(); cur = c; studioNew = false; agentNew = false; editing = null; $('#banner').hidden = true; S.last = id; saveS(); renderChat(); renderList(); closeDrawer(); loadDraft(); }
 
 /* ---------- 製作遊戲模式：Planner 規劃 → Builder 實作 → 實際執行檢查 → Evaluator 審查，不通過就退回 Builder ---------- */
 const STAGE_NAMES = { planner: 'Planner · 規劃', builder: 'Builder · 實作', evaluator: 'Evaluator · 審查' };
@@ -1343,6 +1387,7 @@ function applyGameMode() {
     fillPipe();
   } else if (!S.imgMode) { $('#model').hidden = $('#searchToggle').hidden = false; thinkSelect(); $('#input').placeholder = '輸入訊息，或貼上圖片'; }
   updatePane();
+  applyAgentMode();
 }
 function fillThink(k) {
   const sel = $('#pt' + k[0].toUpperCase() + k.slice(1)), o = thinkOptions(S.gameModels[k]);
@@ -1429,12 +1474,291 @@ $('#greload').onclick = () => { const p = $('#gpane'); $('#gframe').srcdoc = p._
 $('#gfull').onclick = () => { if ($('#gpane')._code) openPreview($('#gpane')._code); };
 window.addEventListener('resize', () => updatePane());
 
+/* ===================== 程式代理（只在 Windows 本機版出現） =====================
+   對話台由本機的 PowerShell 伺服器提供時，window.GH_LOCAL 會帶有權杖。
+   Gemini 透過函式呼叫使用下面的工具；讀取類工具直接執行，修改檔案與執行指令依核准方式詢問使用者。 */
+var LOCAL = window.GH_LOCAL || null;
+function isAgent() { return cur ? cur.kind === 'agent' : agentNew; }
+async function api(path, body) {
+  let r;
+  try { r = await fetch('/api/' + path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-GH-Token': LOCAL.token }, body: JSON.stringify(body || {}) }); }
+  catch { throw new Error('連不到本機伺服器，請確認「Gemini 對話台」的啟動視窗還開著。'); }
+  let j = {}; try { j = await r.json(); } catch {}
+  if (!r.ok || j.error) throw new Error(j.error || ('本機伺服器錯誤（HTTP ' + r.status + '）'));
+  return j;
+}
+function newAgent() { newChat(); agentNew = true; renderChat(); }
+function applyAgentMode() {
+  $('#newAgent').hidden = !LOCAL;
+  const on = isAgent();
+  $('#abar').hidden = !on;
+  if (!on) return;
+  $('#gemSel').hidden = true; $('#searchToggle').hidden = true; $('#imgToggle').hidden = true;
+  $('#model').hidden = false; thinkSelect();
+  const root = cur ? cur.root : S.agentRoot;
+  $('#aroot').textContent = root ? '\u200e' + root + '\u200e' : '尚未選擇工作資料夾'; $('#aroot').title = root || '';
+  $('#apick').hidden = !!(cur && cur.messages.length);
+  $('#aopen').hidden = !root;
+  const mode = (cur ? cur.mode : S.agentMode) || 'ask';
+  if ($('#amode').value !== mode) { $('#amode').value = mode; $('#amode').dispatchEvent(new Event('change')); }
+  $('#input').placeholder = root ? '要我在這個資料夾做什麼？' : '先選擇工作資料夾';
+}
+async function pickRoot() {
+  try {
+    const j = await api('pickdir', { start: (cur && cur.root) || S.agentRoot || '' });
+    if (!j.path) return;
+    S.agentRoot = j.path; saveS();
+    if (cur && cur.kind === 'agent' && !cur.messages.length) cur.root = j.path;
+    renderChat();
+  } catch (e) { toast(e.message); }
+}
+$('#apick').onclick = pickRoot;
+$('#aopen').onclick = () => { const root = cur ? cur.root : S.agentRoot; if (root) api('open', { root, path: '.' }).catch(e => toast(e.message)); };
+$('#amode').onchange = e => { const v = e.target.value; if (cur && cur.kind === 'agent') { cur.mode = v; persist(cur); } S.agentMode = v; saveS(); };
+function agentWelcome() {
+  const w = h('div', 'welcome'), root = S.agentRoot;
+  w.append(h('div', 'kicker', '程式代理'), h('h1', '', root ? '要我在這個資料夾做什麼？' : '先選一個工作資料夾'),
+    h('p', '', 'Gemini 會在你指定的資料夾裡讀檔、搜尋、修改程式和執行 PowerShell 指令來完成任務。修改檔案和執行指令前會先問你，可以在上方調整核准方式。'));
+  if (!root) { const b = h('button', 'btn primary', '選擇工作資料夾'); b.style.alignSelf = 'flex-start'; b.onclick = pickRoot; w.append(b); return w; }
+  const chips = h('div', 'chips');
+  [['了解專案', '看一下這個資料夾的結構，說明每個部分在做什麼'],
+   ['修錯誤', '執行這個專案，找出錯誤並修好'],
+   ['做個網頁', '在這個資料夾建立一個單檔的網頁小遊戲，完成後用瀏覽器開啟'],
+   ['整理檔案', '列出這個資料夾裡的檔案，建議怎麼分類整理，先不要動手']].forEach(([a, b]) => {
+    const c = h('button'); c.append(a, h('small', '', b)); c.onclick = () => { $('#input').value = b; grow(); $('#input').focus(); updateSend(); }; chips.append(c);
+  });
+  w.append(chips);
+  return w;
+}
+
+const AGENT_TOOLS = [
+  { name: 'list_dir', description: '列出資料夾內容。recursive=true 時會往下列出子資料夾（略過 node_modules、.git 等）。', parameters: { type: 'object', properties: { path: { type: 'string', description: '相對於工作資料夾的路徑，預設為 .' }, recursive: { type: 'boolean' } } } },
+  { name: 'read_file', description: '讀取文字檔內容。大檔案可用 offset（從第幾行開始，1 起算）與 limit（讀幾行）分段讀。', parameters: { type: 'object', properties: { path: { type: 'string' }, offset: { type: 'integer' }, limit: { type: 'integer' } }, required: ['path'] } },
+  { name: 'write_file', description: '建立新檔或整個覆寫檔案（自動建立上層資料夾）。修改既有檔案的一部分請改用 edit_file。', parameters: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string', description: '完整的檔案內容' } }, required: ['path', 'content'] } },
+  { name: 'edit_file', description: '把檔案中的 old_text 換成 new_text。old_text 必須與檔案內容完全一致（含空白與縮排），且只出現一次；要全部替換時設 replace_all=true。', parameters: { type: 'object', properties: { path: { type: 'string' }, old_text: { type: 'string' }, new_text: { type: 'string' }, replace_all: { type: 'boolean' } }, required: ['path', 'old_text', 'new_text'] } },
+  { name: 'search', description: '在檔案內容中搜尋正規表示式，回傳「檔案:行號: 內容」。', parameters: { type: 'object', properties: { pattern: { type: 'string' }, path: { type: 'string', description: '搜尋範圍，預設為整個工作資料夾' }, include: { type: 'string', description: '只搜尋符合這個檔名樣式的檔案，例如 *.js' } }, required: ['pattern'] } },
+  { name: 'find_files', description: '依檔名樣式（萬用字元，例如 *.py、main.*）遞迴尋找檔案。', parameters: { type: 'object', properties: { pattern: { type: 'string' }, path: { type: 'string' } }, required: ['pattern'] } },
+  { name: 'run_command', description: '在工作資料夾中用 PowerShell 執行指令，回傳輸出與結束代碼。會一直執行的程式（開發伺服器、監看模式）請設 background=true，之後用 background_task 查看輸出或停止。', parameters: { type: 'object', properties: { command: { type: 'string' }, cwd: { type: 'string', description: '相對於工作資料夾的子資料夾，預設為 .' }, timeout_sec: { type: 'integer', description: '逾時秒數，預設 120，最多 600' }, background: { type: 'boolean' } }, required: ['command'] } },
+  { name: 'background_task', description: '查看或停止用 background=true 啟動的程式。', parameters: { type: 'object', properties: { id: { type: 'string' }, action: { type: 'string', enum: ['read', 'stop'] } }, required: ['id', 'action'] } },
+  { name: 'todo_write', description: '更新這個任務的待辦清單（整份覆寫）。多步驟的工作先列出，開始做某項時標 in_progress，做完標 completed。', parameters: { type: 'object', properties: { todos: { type: 'array', items: { type: 'object', properties: { content: { type: 'string' }, status: { type: 'string', enum: ['pending', 'in_progress', 'completed'] } }, required: ['content', 'status'] } } }, required: ['todos'] } }
+];
+const TOOL_INFO = {
+  list_dir: ['列出', a => a.path || '.'], read_file: ['讀取', a => a.path], write_file: ['寫入', a => a.path], edit_file: ['修改', a => a.path],
+  search: ['搜尋', a => a.pattern + (a.include ? '　' + a.include : '')], find_files: ['找檔案', a => a.pattern], run_command: ['執行', a => a.command],
+  background_task: ['背景工作', a => (a.action === 'stop' ? '停止 ' : '查看 ') + a.id], todo_write: ['待辦清單', a => (a.todos || []).filter(t => t.status === 'completed').length + ' / ' + (a.todos || []).length + ' 完成']
+};
+const clip = (t, n) => { t = String(t == null ? '' : t); return t.length > n ? t.slice(0, n) + '\n…（以下省略 ' + (t.length - n) + ' 字）' : t; };
+const AGENT_RUN = {
+  async list_dir(c, a) { const j = await api('list', { root: c.root, path: a.path || '.', recursive: !!a.recursive }); const txt = j.entries.map(e => e.name + (e.type === 'dir' ? '/' : '')).join('\n') || '（空資料夾）'; return { model: { entries: txt, truncated: !!j.truncated }, out: txt + (j.truncated ? '\n…（項目太多，已截斷）' : '') }; },
+  async read_file(c, a) { const j = await api('read', { root: c.root, path: a.path, offset: a.offset || 1, limit: a.limit || 2000 }); return { model: { content: j.content, from_line: j.start, to_line: j.end, total_lines: j.total }, out: '第 ' + j.start + '–' + j.end + ' 行，共 ' + j.total + ' 行\n\n' + j.content }; },
+  async write_file(c, a) { const j = await api('write', { root: c.root, path: a.path, content: a.content || '' }); return { model: { ok: true, created: j.created, bytes: j.bytes }, out: (j.created ? '已建立' : '已覆寫') + '，' + j.bytes + ' 位元組' }; },
+  async edit_file(c, a) { const j = await api('edit', { root: c.root, path: a.path, old_text: a.old_text || '', new_text: a.new_text || '', replace_all: !!a.replace_all }); return { model: { ok: true, replacements: j.replacements }, out: '已替換 ' + j.replacements + ' 處' }; },
+  async search(c, a) { const j = await api('search', { root: c.root, pattern: a.pattern, path: a.path || '.', include: a.include || '' }); const txt = j.matches.join('\n') || '（沒有符合的結果）'; return { model: { matches: txt, truncated: !!j.truncated }, out: txt }; },
+  async find_files(c, a) { const j = await api('find', { root: c.root, pattern: a.pattern, path: a.path || '.' }); const txt = j.files.join('\n') || '（沒有找到）'; return { model: { files: txt, truncated: !!j.truncated }, out: txt }; },
+  async run_command(c, a) {
+    const j = await api('run', { root: c.root, cwd: a.cwd || '.', command: a.command, timeout_sec: Math.min(600, a.timeout_sec || 120), background: !!a.background });
+    if (j.id) return { model: { started: true, id: j.id, note: '已在背景執行，用 background_task 查看輸出' }, out: '已在背景啟動（編號 ' + j.id + '）' };
+    const out = (j.stdout || '') + (j.stderr ? (j.stdout ? '\n' : '') + '[stderr]\n' + j.stderr : '');
+    return { model: { exit_code: j.exit_code, timed_out: !!j.timed_out, output: clip(out, 30000) }, out: clip(out, 12000) + '\n\n結束代碼 ' + j.exit_code + (j.timed_out ? '（逾時，已停止）' : '') };
+  },
+  async background_task(c, a) { const j = await api('bg', { id: a.id, action: a.action }); return { model: { running: j.running, output: clip(j.output, 20000) }, out: (j.running ? '執行中' : '已結束') + '\n\n' + clip(j.output, 8000) }; },
+  async todo_write(c, a) { c.todos = (a.todos || []).map(t => ({ content: String(t.content || ''), status: t.status })); return { model: { ok: true }, out: '' }; }
+};
+const needsOk = (c, name) => {
+  const kind = name === 'write_file' || name === 'edit_file' ? 'edit' : name === 'run_command' || (name === 'background_task') ? 'run' : '';
+  if (!kind) return '';
+  if (name === 'background_task') return '';  // 查看或停止自己啟動的程式不必再問
+  const mode = c.mode || 'ask'; c.allow = c.allow || {};
+  if (mode === 'all' || c.allow[kind]) return '';
+  if (kind === 'edit' && mode === 'edits') return '';
+  return kind;
+};
+let agentAbort = false; const approvals = new Map();
+function agentStop() { agentAbort = true; approvals.forEach(f => f('deny')); approvals.clear(); }
+function toolEl(m) {
+  const el = h('div', 'msg tool'); el.dataset.id = m.id;
+  el._update = () => {
+    el.dataset.st = m.status; el.innerHTML = '';
+    const [verb, tgt] = TOOL_INFO[m.name] || [m.name, () => ''];
+    const card = h('details', 'tcard'), sum = h('summary');
+    sum.append(h('i', 'ti'), h('span', 'tv', verb), h('span', 'tt', String(tgt(m.args || {}) || '')), h('span', 'ts', { run: '進行中', wait: '等待核准', ok: '完成', err: '失敗', deny: '已拒絕' }[m.status] || ''));
+    card.append(sum);
+    const a = m.args || {};
+    if (m.name === 'todo_write') {
+      const ul = h('ul', 'todo'); (a.todos || []).forEach(t => ul.append(h('li', t.status, t.content))); card.append(ul); card.open = true;
+    } else {
+      if (m.name === 'edit_file') {
+        const pre = h('pre', 'diff');
+        String(a.old_text || '').split('\n').forEach(l => pre.append(h('span', 'del', '- ' + l)));
+        String(a.new_text || '').split('\n').forEach(l => pre.append(h('span', 'ins', '+ ' + l)));
+        card.append(h('div', 'lab', '修改內容'), pre); card.open = m.status === 'wait' || m.open;
+      } else if (m.name === 'write_file') {
+        card.append(h('div', 'lab', '檔案內容（' + String(a.content || '').split('\n').length + ' 行）'), h('pre', '', clip(a.content, 6000)));
+        card.open = m.status === 'wait';
+      } else if (m.name === 'run_command') {
+        card.append(h('div', 'lab', '指令' + (a.cwd && a.cwd !== '.' ? '（在 ' + a.cwd + '）' : '') + (a.background ? '，背景執行' : '')), h('pre', '', a.command || ''));
+        card.open = m.status === 'wait';
+      }
+      if (m.out) { card.append(h('div', 'lab', m.status === 'err' ? '錯誤' : '結果'), h('pre', '', m.out)); }
+    }
+    if (m.status === 'wait') {
+      const ap = h('div', 'appr'), kind = m.kind;
+      ap.append(h('div', 'q', kind === 'run' ? '要執行這個指令嗎？' : '要套用這個修改嗎？'));
+      const btn = (t, v, cls) => { const b = h('button', cls || '', t); b.onclick = () => { const f = approvals.get(m.id); if (f) { approvals.delete(m.id); f(v); } }; ap.append(b); };
+      btn('允許', 'yes', 'yes'); btn(kind === 'run' ? '這個任務都允許執行指令' : '這個任務都允許修改', 'always'); btn('拒絕', 'deny');
+      card.append(ap); card.open = true;
+    }
+    el.append(card);
+  };
+  el._update();
+  return el;
+}
+function addMsg(chat, m) {
+  chat.messages.push(m);
+  if (cur === chat && !m.silent) { const el = m.role === 'tool' ? toolEl(m) : modelEl(m); els.set(m.id, el); $('#msgs').classList.remove('empty'); const w = $('#msgs .welcome'); if (w) w.remove(); $('#msgs').append(el); if (stick) toBottom(); }
+}
+async function runTool(chat, fc, usageHolder) {
+  const name = fc.name, args = fc.args || {}, impl = AGENT_RUN[name];
+  const m = { id: uid(), role: 'tool', name, args, status: 'run' };
+  if (usageHolder.usage) { Object.assign(m, usageHolder.usage); usageHolder.usage = null; }
+  addMsg(chat, m);
+  if (!impl) { m.status = 'err'; m.out = '沒有這個工具：' + name; refreshMsg(m); return { error: m.out }; }
+  const kind = needsOk(chat, name);
+  if (kind) {
+    m.status = 'wait'; m.kind = kind; refreshMsg(m); toBottom();
+    const ans = agentAbort ? 'deny' : await new Promise(res => approvals.set(m.id, res));
+    if (ans === 'deny') { m.status = 'deny'; refreshMsg(m); return { error: '使用者拒絕了這個操作。不要換個方式重做，先說明你想做什麼並詢問使用者。' }; }
+    if (ans === 'always') { chat.allow = chat.allow || {}; chat.allow[kind] = true; }
+    m.status = 'run'; refreshMsg(m);
+  }
+  try {
+    const r = await impl(chat, args);
+    m.status = 'ok'; m.out = r.out; refreshMsg(m);
+    return r.model;
+  } catch (e) {
+    m.status = 'err'; m.out = e.message; refreshMsg(m);
+    return { error: e.message };
+  }
+}
+async function agentContext(chat) {
+  let top = '', notes = '';
+  try { const j = await api('list', { root: chat.root, path: '.', recursive: false }); top = j.entries.slice(0, 80).map(e => e.name + (e.type === 'dir' ? '/' : '')).join('\n'); } catch {}
+  for (const f of ['GEMINI.md', 'AGENTS.md', 'CLAUDE.md']) {
+    try { const j = await api('read', { root: chat.root, path: f, offset: 1, limit: 400 }); notes = '專案說明（' + f + '）：\n' + clip(j.content, 8000); break; } catch {}
+  }
+  return { top, notes };
+}
+const AGENT_SYS = (chat, ctx) => [
+  '你是在使用者 Windows 電腦上工作的程式代理，作法類似 Claude Code：透過工具直接讀寫檔案、搜尋程式碼、執行指令來完成任務。',
+  '工作資料夾：' + chat.root + '（路徑一律相對於它；無法存取資料夾以外的位置）',
+  '作業系統是 Windows，run_command 使用 PowerShell 語法（例如用 ; 串接指令、Get-ChildItem、Remove-Item、Start-Process）。',
+  '工作原則：',
+  '- 動手前先用 list_dir、find_files、search、read_file 了解現況，不要猜測檔案內容。',
+  '- 修改既有檔案優先用 edit_file，old_text 要從 read_file 的結果原樣複製（含縮排）；建立新檔或要整份重寫才用 write_file。',
+  '- 三個步驟以上的工作先用 todo_write 列出待辦，開始與完成每一項時更新狀態。',
+  '- 改完盡量執行程式、測試或建置來驗證；會持續執行的程式用 background=true。網頁可用 Start-Process 檔名 在瀏覽器開啟。',
+  '- 不要執行破壞性或不可逆的指令（大量刪除、格式化、強制覆蓋 git 歷史等），除非使用者明確要求。',
+  '- 使用者拒絕某個操作時，不要換個方式重做；說明原因並詢問下一步。',
+  '- 用繁體中文回覆，簡潔說明做了什麼與結果；不要在回覆裡重貼整份檔案。',
+  S.noEmoji ? '- 回覆不要使用 emoji。' : '',
+  S.system.trim() ? '使用者的背景資訊與偏好：\n' + S.system.trim() : '',
+  ctx.notes,
+  ctx.top ? '工作資料夾最上層的內容：\n' + ctx.top : ''
+].filter(Boolean).join('\n');
+function partsOf(u) {
+  const parts = [];
+  for (const a of u.atts || []) parts.push(a.kind === 'text' ? { text: '【附件：' + a.name + '】\n' + a.text } : { inlineData: { mimeType: a.mime, data: a.data } });
+  if (u.text) parts.push({ text: u.text });
+  return parts;
+}
+async function runAgent(chat, u) {
+  const keys = activeKeys();
+  chat.agent = chat.agent || [];
+  chat.agent.push({ role: 'user', parts: partsOf(u) });
+  agentAbort = false;
+  const ctx = await agentContext(chat);
+  const sys = AGENT_SYS(chat, ctx);
+  const holder = { usage: null };
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  for (let step = 0; step < 60 && !agentAbort; step++) {
+    const m = { id: uid(), role: 'model', text: '', streaming: true, model: (isVertex() ? 'Vertex · ' : '') + S.model, mid: S.model, at: Date.now() };
+    addMsg(chat, m);
+    const ctrl = new AbortController(); busy = { ctrl, msg: m }; updateSend();
+    const gc = {}, to = thinkOptions(S.model), tv = S.think[S.model], tc = {};
+    if (S.thoughts) tc.includeThoughts = true;
+    if (to && tv && to.opts.some(([v]) => v === tv)) { if (to.kind === 'level') tc.thinkingLevel = tv; else tc.thinkingBudget = Number(tv); }
+    if (Object.keys(tc).length) gc.thinkingConfig = tc;
+    const body = { contents: chat.agent, systemInstruction: { parts: [{ text: sys }] }, tools: [{ functionDeclarations: AGENT_TOOLS }] };
+    if (Object.keys(gc).length) body.generationConfig = gc;
+    let raw = [], paint = 0;
+    const onChunk = j => {
+      if (j.error) { const e = new Error(j.error.message || ''); e.status = j.error.code; throw e; }
+      const c = (j.candidates || [])[0];
+      if (c) {
+        for (const p of (c.content && c.content.parts) || []) {
+          if (p.thought && typeof p.text === 'string') { m.thoughts = (m.thoughts || '') + p.text; if (p.thoughtSignature) raw.push(p); continue; }
+          if (typeof p.text === 'string' && !p.functionCall) {
+            m.text += p.text;
+            const last = raw[raw.length - 1];
+            if (last && typeof last.text === 'string' && !last.thought && !last.functionCall && !last.thoughtSignature && !p.thoughtSignature) last.text += p.text; else raw.push(Object.assign({}, p));
+            continue;
+          }
+          raw.push(p);
+        }
+        if (c.finishReason && c.finishReason !== 'STOP') m.finish = c.finishReason;
+      }
+      if (j.usageMetadata) m.usage = j.usageMetadata;
+      if (!paint) paint = requestAnimationFrame(() => { paint = 0; refreshMsg(m); });
+    };
+    let err = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        let ok = false;
+        for (let k = 0; k < keys.length && !ok; k++) {
+          try { await stream(keys[k], S.model, body, ctrl.signal, onChunk); ok = true; }
+          catch (e) { if (e.name !== 'AbortError' && (e.status === 429 || e.status === 403) && k < keys.length - 1 && !raw.length) continue; throw e; }
+        }
+        err = null; break;
+      } catch (e) {
+        err = e;
+        if (e.name === 'AbortError' || raw.length || attempt === 2 || !(!e.status || e.status === 429 || e.status >= 500)) break;
+        await wait(1500 * (attempt + 1));
+      }
+    }
+    cancelAnimationFrame(paint); delete m.streaming; busy = null; updateSend();
+    if (err) { if (err.name === 'AbortError') m.note = '已停止。'; else m.error = explain(err); refreshMsg(m); break; }
+    const calls = raw.filter(p => p.functionCall);
+    if (!m.text.trim() && !m.thoughts && calls.length) {
+      // 這一步只有工具呼叫：不顯示空白回覆，用量記到下一張工具卡片
+      m.silent = true; const el = els.get(m.id); if (el) el.remove();
+      holder.usage = { usage: m.usage, mid: m.mid, at: m.at, model: m.model }; delete m.usage;
+    } else refreshMsg(m);
+    const keep = raw.filter(p => !(p.thought && !p.thoughtSignature));
+    chat.agent.push({ role: 'model', parts: keep.length ? keep : [{ text: m.text || '（沒有回覆）' }] });
+    if (!calls.length) { if (!m.text.trim() && !m.error) { m.note = '模型沒有回傳內容。可以再說一次，或換個模型試試。'; refreshMsg(m); } break; }
+    const resp = [];
+    for (const p of calls) {
+      const out = agentAbort ? { error: '使用者停止了任務。' } : await runTool(chat, p.functionCall, holder);
+      const fr = { name: p.functionCall.name, response: out && typeof out === 'object' && !Array.isArray(out) ? out : { result: out } };
+      if (p.functionCall.id) fr.id = p.functionCall.id;
+      resp.push({ functionResponse: fr });
+    }
+    chat.agent.push({ role: 'user', parts: resp });
+    await persist(chat); if (cur === chat) showTotal();
+    if (step === 59) { const n = { id: uid(), role: 'model', text: '', note: '已達單次任務的步數上限（60 步）。輸入「繼續」可以接著做。' }; addMsg(chat, n); }
+  }
+  busy = null; updateSend();
+  await persist(chat); renderList(); if (cur === chat) showTotal();
+  if (chat.auto) autoTitle(chat);
+}
+
 async function submit() {
-  if (busy) { gameAbort = true; busy.ctrl.abort(); return; }
+  if (busy) { gameAbort = true; agentStop(); busy.ctrl.abort(); return; }
   const inp = $('#input'), text = inp.value.trim();
   if (!text && !pending.length) return;
   if (!activeKeys().length) { openSettings(); toast('請先填入 API 金鑰'); return; }
-  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; if (studioNew) { cur.kind = 'game'; cur.gem = ''; studioNew = false; } chats.push(cur); S.last = cur.id; saveS(); }
+  if (isAgent() && !(cur ? cur.root : S.agentRoot)) { toast('請先選擇工作資料夾'); pickRoot(); return; }
+  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; if (studioNew) { cur.kind = 'game'; cur.gem = ''; studioNew = false; } if (agentNew) { cur.kind = 'agent'; cur.gem = ''; cur.root = S.agentRoot; cur.mode = S.agentMode; agentNew = false; } chats.push(cur); S.last = cur.id; saveS(); }
   if (editing) { const i = cur.messages.findIndex(m => m.id === editing); if (i >= 0) cur.messages.length = i; editing = null; $('#banner').hidden = true; }
   const u = { id: uid(), role: 'user', text, atts: pending };
   const m = { id: uid(), role: 'model', text: '' }; if (S.imgMode) m.img = true;
@@ -1442,6 +1766,7 @@ async function submit() {
   pending = []; inp.value = ''; grow(); renderAtts(); clearDraft('new'); clearDraft(cur.id);
   renderChat(); renderList();
   if (cur.kind === 'game') return runGame(cur, u, m);
+  if (cur.kind === 'agent') { cur.messages.pop(); renderChat(); return runAgent(cur, u); }
   await run(cur, m);
 }
 function versionsOf(m) {
@@ -1535,7 +1860,7 @@ $('#chatList').addEventListener('click', async e => {
   }
 });
 
-$('#newChat').onclick = newChat; $('#newChat2').onclick = () => isStudio() ? newGame() : newChat(); $('#newGame').onclick = newGame;
+$('#newChat').onclick = newChat; $('#newChat2').onclick = () => isStudio() ? newGame() : isAgent() ? newAgent() : newChat(); $('#newGame').onclick = newGame; $('#newAgent').onclick = newAgent;
 $('#search').oninput = renderList;
 $('#sideToggle').onclick = () => { if (narrow()) $('#app').classList.toggle('drawer'); else { S.sideOpen = !S.sideOpen; saveS(); applySide(); } };
 $('#scrim').onclick = closeDrawer;
@@ -1739,7 +2064,7 @@ document.addEventListener('keydown', e => {
 /* ---------- 螢幕鍵盤：讓版面跟著可視區域縮放 ---------- */
 const vv = window.visualViewport;
 enhance($('#model'), 'up'); enhance($('#think'), 'up'); enhance($('#gemSel'), 'down');
-['pmPlanner', 'pmBuilder', 'pmEvaluator', 'pmRounds', 'ptPlanner', 'ptBuilder', 'ptEvaluator'].forEach(id => enhance($('#' + id), 'down'));
+['pmPlanner', 'pmBuilder', 'pmEvaluator', 'pmRounds', 'ptPlanner', 'ptBuilder', 'ptEvaluator', 'amode'].forEach(id => enhance($('#' + id), 'down'));
 function fit() { const vh = vv ? vv.height : window.innerHeight; document.documentElement.style.setProperty('--vh', vh + 'px'); $('#app').classList.toggle('compact', vh < 560); if (vv) window.scrollTo(0, 0); if (stick) toBottom(); }
 if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
 window.addEventListener('resize', fit);
