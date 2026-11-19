@@ -555,11 +555,7 @@ const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customMode
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
-const DEFAULT_GEMS = [
-  { id: 'stem', name: '理工家教', prompt: '你是大學教授，講解對象是初學者。請用繁體中文詳細說明，不跳步驟。有比較簡單的算法時優先採用（例如部分分式用代入法），計算過程逐步寫出（例如部分分式的每個係數分別列出）。輸出前仔細驗算。\n\n公式一律用 LaTeX：行內用 $...$，獨立一行用 $$...$$，只用最基本的標準語法，不要用 \\bm、\\underbrace、\\overbrace；需要粗體時用 \\mathbf 或數學式外的 Markdown。公式和說明分開：子項的解釋寫成公式下方的條列文字，不要寫進大括號裡。輸出前檢查所有括號與符號都成對。' },
-  { id: 'english', name: '英語口說家教', prompt: 'You are my private English speaking tutor. My level is around TOEIC 600. Talk with me in simple, natural spoken English, one short turn at a time, and end each turn with one question so I keep talking. After each of my replies, first point out my mistakes: show the corrected sentence and a one-line explanation in Traditional Chinese, plus one more natural way to say it. Then continue the conversation. Do not write long paragraphs.' },
-  { id: 'code', name: '程式助手', prompt: '你是程式助手，用繁體中文說明。請提供可以直接使用的完整程式碼，不要省略或用「其餘不變」帶過；修改既有程式時輸出完整的新版本。網頁與 userscript 以單一檔案為主，並考慮 iPad Safari 的相容性。先給程式碼，再用幾行說明重點與使用方式。' }
-];
+const DEFAULT_GEMS = [];
 if (!S.merged) {
   // 舊版的「記憶」與「系統指示」合併成「個人指示」
   const mem = typeof S.memory === 'string' ? S.memory : '- 我在台灣，請用繁體中文與台灣慣用的詞彙回答。';
@@ -567,6 +563,12 @@ if (!S.merged) {
   delete S.memory; delete S.useMemory; S.merged = true;
 }
 if (!Array.isArray(S.gems)) S.gems = JSON.parse(JSON.stringify(DEFAULT_GEMS));
+if (!S.gemsCleared) {
+  // 移除舊版內建的三個 Skill（使用者自己新增的保留）
+  S.gems = S.gems.filter(g => !['stem', 'english', 'code'].includes(g.id));
+  if (!S.gems.some(g => g.id === S.gem)) S.gem = '';
+  S.gemsCleared = true; saveS();
+}
 const gemOf = id => S.gems.find(g => g.id === id);
 /* 兩種服務：studio = Gemini API（AI Studio 金鑰）；vertex = Google Cloud 的 Vertex AI / Agent Platform 金鑰 */
 const isVertex = () => S.provider === 'vertex';
