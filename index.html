@@ -333,6 +333,13 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
 #abar .folder svg{width:18px;height:18px;flex:none;fill:none;stroke:var(--muted);stroke-width:1.7;stroke-linejoin:round}
 #aroot{font-family:var(--mono);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:rtl;text-align:left;flex:1;min-width:0;color:var(--ink)}
 #abar .folder button{font-size:13px;min-height:32px;padding:0 11px;border-radius:9px;border:1px solid var(--line);background:var(--bg);flex:none}
+#agodot{font-size:13px;min-height:40px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);flex:none;color:var(--muted)}
+#agodot[aria-pressed="true"]{background:color-mix(in srgb,#478cbf 14%,var(--surface));border-color:#478cbf;color:var(--ink);font-weight:600}
+#godotFound{display:flex;flex-direction:column;gap:6px}
+#godotFound:empty{display:none}
+#godotFound button{text-align:left;padding:8px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);font:12.5px/1.45 var(--mono);word-break:break-all}
+#godotFound button small{display:block;font-family:inherit;color:var(--muted)}
+#godotFound button.on{border-color:var(--accent)}
 #abar .pickbtn{font-size:13px;min-height:36px}
 .msg.tool{margin-top:-12px;min-width:0}
 .msg.tool+.msg.tool{margin-top:-16px}
@@ -394,6 +401,7 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
     </header>
     <div id="abar" hidden>
       <div class="folder"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v7a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5z"/></svg><code id="aroot">尚未選擇工作資料夾</code><button id="apick">選擇資料夾</button><button id="aopen">開啟</button></div>
+      <button id="agodot" aria-pressed="false">Godot 模式：關</button>
       <select id="amode" aria-label="核准方式"><option value="ask">每次詢問</option><option value="edits">自動允許修改檔案</option><option value="all">全部自動執行</option></select>
     </div>
     <div id="pipe" hidden>
@@ -461,6 +469,10 @@ footer{padding:0 16px calc(8px + env(safe-area-inset-bottom))}
       <div class="f"><span class="lab">模型清單</span>
         <div class="row"><button class="btn" id="refreshModels">從 Google 重新載入</button><button class="btn" id="builtinModels">用內建清單</button><small id="modelCount"></small></div>
         <input id="customModel" type="text" autocapitalize="off" spellcheck="false" placeholder="自訂模型 ID，例如 gemini-3.8-flash"></div>
+      <div class="f" id="godotField" hidden><label for="godotExe">Godot 執行檔</label>
+        <div class="row"><input id="godotExe" type="text" autocapitalize="off" spellcheck="false" placeholder="例如 C:\Godot\Godot_v4.5-stable_win64_console.exe" style="flex:1"><button class="btn" id="godotFind">自動偵測</button></div>
+        <div id="godotFound"></div>
+        <small>程式代理的 Godot 模式用它檢查錯誤與執行遊戲。建議用檔名有 _console 的版本，代理才看得到錯誤訊息。</small></div>
       <div class="f"><span class="lab">Skill（自訂指示）</span>
         <div class="row"><select id="gemEdit" aria-label="要編輯的 Skill" style="flex:1;width:auto"></select><button class="btn" id="gemAdd">新增</button><button class="btn danger" id="gemDel">刪除</button></div>
         <input id="gemName" type="text" placeholder="名稱" aria-label="Skill 名稱">
@@ -551,7 +563,7 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 };
 const S = Object.assign({ key1:'', key2:'', model:'gemini-3.8-flash', customModel:'', system:'', useTemp:false, temp:1,
-  search:false, font:'claude', thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, diagrams:true, gameMode:false, gameLean:false, gameThink:{}, agentRoot:'', agentMode:'ask', gameModels:{ planner:'gemini-4-carbon', builder:'gemini-4-hydrogen', evaluator:'gemini-3.8-flash' }, gameRounds:2, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
+  search:false, font:'claude', thoughts:false, think:{}, gems:null, gem:'', noEmoji:true, lenient:true, diagrams:true, gameMode:false, gameLean:false, gameThink:{}, agentRoot:'', agentMode:'ask', agentGodot:false, godotExe:'', gameModels:{ planner:'gemini-4-carbon', builder:'gemini-4-hydrogen', evaluator:'gemini-3.8-flash' }, gameRounds:2, memory:null, useMemory:true, imgMode:false, imgModel:'gemini-3.1-flash-image', aspect:'', provider:'studio', fx:32.4, vkey:'', vproject:'', vlocation:'global', vmodels:null, modelBy:{}, enterSend:true, theme:'auto', models:FALLBACK_MODELS, modelsAt:0, sideOpen:true, last:'' }, LS.get('gh.settings', {}));
 if (S.listVer !== LIST_VER) { S.listVer = LIST_VER; S.models = FALLBACK_MODELS; S.modelsAt = 0; if (!FALLBACK_MODELS.some(m => m.id === S.model) && S.model !== S.customModel) S.model = 'gemini-3.8-flash'; }
 const saveS = () => LS.set('gh.settings', S);
 saveS();
@@ -1503,6 +1515,8 @@ function applyAgentMode() {
   $('#aroot').textContent = root ? '\u200e' + root + '\u200e' : '尚未選擇工作資料夾'; $('#aroot').title = root || '';
   $('#apick').hidden = !!(cur && cur.messages.length);
   $('#aopen').hidden = !root;
+  const gd = cur ? !!cur.godot : !!S.agentGodot;
+  $('#agodot').setAttribute('aria-pressed', gd); $('#agodot').textContent = 'Godot 模式：' + (gd ? '開' : '關');
   const mode = (cur ? cur.mode : S.agentMode) || 'ask';
   if ($('#amode').value !== mode) { $('#amode').value = mode; $('#amode').dispatchEvent(new Event('change')); }
   $('#input').placeholder = root ? '要我在這個資料夾做什麼？' : '先選擇工作資料夾';
@@ -1511,12 +1525,42 @@ async function pickRoot() {
   try {
     const j = await api('pickdir', { start: (cur && cur.root) || S.agentRoot || '' });
     if (!j.path) return;
-    S.agentRoot = j.path; saveS();
-    if (cur && cur.kind === 'agent' && !cur.messages.length) cur.root = j.path;
+    S.agentRoot = j.path;
+    S.agentGodot = await hasGodotProject(j.path); saveS();
+    if (cur && cur.kind === 'agent' && !cur.messages.length) { cur.root = j.path; cur.godot = S.agentGodot; }
     renderChat();
   } catch (e) { toast(e.message); }
 }
 $('#apick').onclick = pickRoot;
+async function hasGodotProject(root) {
+  try { const j = await api('list', { root, path: '.', recursive: false }); return j.entries.some(e => e.type === 'file' && e.name.toLowerCase() === 'project.godot'); } catch { return false; }
+}
+$('#agodot').onclick = () => {
+  if (cur && cur.kind === 'agent') { cur.godot = !cur.godot; persist(cur); }
+  else S.agentGodot = !S.agentGodot;
+  saveS(); applyAgentMode();
+  if ((cur ? cur.godot : S.agentGodot) && !S.godotExe) toast('還沒設定 Godot 執行檔：到「設定」按「自動偵測」');
+};
+// 設定：Godot 執行檔
+$('#godotExe').onchange = e => { S.godotExe = e.target.value.trim().replace(/^"|"$/g, ''); e.target.value = S.godotExe; saveS(); };
+$('#godotFind').onclick = async () => {
+  const b = $('#godotFind'), box = $('#godotFound');
+  b.disabled = true; b.textContent = '偵測中…'; box.innerHTML = '';
+  try {
+    const list = (await api('godot-find')).found || [];
+    if (!list.length) { box.append(h('small', '', '找不到 Godot。請到 godotengine.org 下載 Godot 4 Windows 版，解壓縮後把 _console 版執行檔的完整路徑貼在上面。')); return; }
+    const pick = f => { S.godotExe = f.path; saveS(); $('#godotExe').value = f.path; box.querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.path === f.path)); };
+    list.forEach(f => {
+      const x = h('button'); x.type = 'button'; x.dataset.path = f.path;
+      x.append(f.path, h('small', '', [f.version ? 'Godot ' + f.version : '版本不明', f.console ? 'console 版' : '非 console 版（看不到錯誤訊息）', f.ok ? '' : '不是 Godot 4'].filter(Boolean).join('　')));
+      x.onclick = () => pick(f); box.append(x);
+    });
+    const best = list.find(f => f.ok) || list[0];
+    if (!S.godotExe || !list.some(f => f.path === S.godotExe)) pick(best); else pick(list.find(f => f.path === S.godotExe));
+    toast('已選擇 ' + best.path.split('\\').pop());
+  } catch (e) { toast(e.message); }
+  finally { b.disabled = false; b.textContent = '自動偵測'; }
+};
 $('#aopen').onclick = () => { const root = cur ? cur.root : S.agentRoot; if (root) api('open', { root, path: '.' }).catch(e => toast(e.message)); };
 $('#amode').onchange = e => { const v = e.target.value; if (cur && cur.kind === 'agent') { cur.mode = v; persist(cur); } S.agentMode = v; saveS(); };
 function agentWelcome() {
@@ -1546,13 +1590,35 @@ const AGENT_TOOLS = [
   { name: 'background_task', description: '查看或停止用 background=true 啟動的程式。', parameters: { type: 'object', properties: { id: { type: 'string' }, action: { type: 'string', enum: ['read', 'stop'] } }, required: ['id', 'action'] } },
   { name: 'todo_write', description: '更新這個任務的待辦清單（整份覆寫）。多步驟的工作先列出，開始做某項時標 in_progress，做完標 completed。', parameters: { type: 'object', properties: { todos: { type: 'array', items: { type: 'object', properties: { content: { type: 'string' }, status: { type: 'string', enum: ['pending', 'in_progress', 'completed'] } }, required: ['content', 'status'] } } }, required: ['todos'] } }
 ];
+const GODOT_TOOLS = [
+  { name: 'godot_check', description: '用 Godot 檢查整個專案：匯入資源、載入所有腳本與場景找語法錯誤，再用無視窗模式試跑主場景（或指定的 scene）幾個畫格抓執行錯誤。回傳 ok、errors、warnings。每次修改 .gd 或 .tscn 之後都要執行。', parameters: { type: 'object', properties: { scene: { type: 'string', description: '要試跑的場景，例如 res://scenes/main.tscn；不填則用專案的主場景' }, frames: { type: 'integer', description: '試跑的畫格數，預設 120（約 2 秒），0 表示不試跑' } } } },
+  { name: 'godot_run', description: '開啟遊戲視窗讓使用者試玩（一次只開一個，再開會關掉上一個）。回傳背景工作編號與前幾秒的輸出，之後可用 background_task 查看輸出或停止。editor=true 時改為開啟 Godot 編輯器。', parameters: { type: 'object', properties: { scene: { type: 'string', description: '要執行的場景；不填則執行主場景' }, editor: { type: 'boolean' } } } }
+];
 const TOOL_INFO = {
+  godot_check: ['Godot 檢查', a => a.scene || '整個專案'], godot_run: ['Godot 執行', a => a.editor ? '開啟編輯器' : (a.scene || '主場景')],
   list_dir: ['列出', a => a.path || '.'], read_file: ['讀取', a => a.path], write_file: ['寫入', a => a.path], edit_file: ['修改', a => a.path],
   search: ['搜尋', a => a.pattern + (a.include ? '　' + a.include : '')], find_files: ['找檔案', a => a.pattern], run_command: ['執行', a => a.command],
   background_task: ['背景工作', a => (a.action === 'stop' ? '停止 ' : '查看 ') + a.id], todo_write: ['待辦清單', a => (a.todos || []).filter(t => t.status === 'completed').length + ' / ' + (a.todos || []).length + ' 完成']
 };
 const clip = (t, n) => { t = String(t == null ? '' : t); return t.length > n ? t.slice(0, n) + '\n…（以下省略 ' + (t.length - n) + ' 字）' : t; };
 const AGENT_RUN = {
+  async godot_check(c, a) {
+    const b = { root: c.root, exe: S.godotExe || '', scene: a.scene || '' }; if (a.frames != null) b.frames = a.frames;
+    const j = await api('godot-check', b);
+    const st = j.stages || {}, lines = [];
+    lines.push(j.ok ? '沒有發現錯誤' : '發現 ' + j.error_count + ' 個錯誤', (j.version ? 'Godot ' + j.version + '　' : '') + (st.scripts ? '檢查 ' + st.scripts.checked + ' 個腳本與場景' : '') + (st.run && !st.run.skipped ? '　試跑 ' + st.run.frames + ' 畫格' : ''));
+    if (st.run && st.run.skipped) lines.push(st.run.skipped);
+    if ((j.errors || []).length) lines.push('', '【錯誤】', j.errors.join('\n\n'));
+    if ((j.warnings || []).length) lines.push('', '【警告 ' + j.warning_count + ' 個】', j.warnings.slice(0, 10).join('\n\n'));
+    const model = { ok: j.ok, version: j.version, stages: st, errors: j.errors, warnings: j.warnings, error_count: j.error_count, warning_count: j.warning_count };
+    if (!j.ok) model.log_tail = clip((j.log || '').slice(-12000), 12000);
+    return { model, out: lines.join('\n'), status: j.ok ? 'ok' : 'err' };
+  },
+  async godot_run(c, a) {
+    const j = await api('godot-run', { root: c.root, exe: S.godotExe || '', scene: a.scene || '', editor: !!a.editor });
+    const out = (j.running ? (a.editor ? '編輯器已開啟' : '遊戲視窗已開啟') : '程式已結束（結束代碼 ' + j.exit_code + '）') + '，背景工作編號 ' + j.id + ((j.errors || []).length ? '\n\n【錯誤】\n' + j.errors.join('\n\n') : '') + (j.output ? '\n\n' + clip(j.output, 6000) : '');
+    return { model: { id: j.id, running: j.running, exit_code: j.exit_code, errors: j.errors, error_count: j.error_count, output: clip(j.output, 8000) }, out, status: (j.errors || []).length || (!j.running && j.exit_code) ? 'err' : 'ok' };
+  },
   async list_dir(c, a) { const j = await api('list', { root: c.root, path: a.path || '.', recursive: !!a.recursive }); const txt = j.entries.map(e => e.name + (e.type === 'dir' ? '/' : '')).join('\n') || '（空資料夾）'; return { model: { entries: txt, truncated: !!j.truncated }, out: txt + (j.truncated ? '\n…（項目太多，已截斷）' : '') }; },
   async read_file(c, a) { const j = await api('read', { root: c.root, path: a.path, offset: a.offset || 1, limit: a.limit || 2000 }); return { model: { content: j.content, from_line: j.start, to_line: j.end, total_lines: j.total }, out: '第 ' + j.start + '–' + j.end + ' 行，共 ' + j.total + ' 行\n\n' + j.content }; },
   async write_file(c, a) { const j = await api('write', { root: c.root, path: a.path, content: a.content || '' }); return { model: { ok: true, created: j.created, bytes: j.bytes }, out: (j.created ? '已建立' : '已覆寫') + '，' + j.bytes + ' 位元組' }; },
@@ -1569,7 +1635,7 @@ const AGENT_RUN = {
   async todo_write(c, a) { c.todos = (a.todos || []).map(t => ({ content: String(t.content || ''), status: t.status })); return { model: { ok: true }, out: '' }; }
 };
 const needsOk = (c, name) => {
-  const kind = name === 'write_file' || name === 'edit_file' ? 'edit' : name === 'run_command' || (name === 'background_task') ? 'run' : '';
+  const kind = name === 'write_file' || name === 'edit_file' ? 'edit' : name === 'run_command' || name === 'godot_check' || name === 'godot_run' ? 'run' : '';
   if (!kind) return '';
   if (name === 'background_task') return '';  // 查看或停止自己啟動的程式不必再問
   const mode = c.mode || 'ask'; c.allow = c.allow || {};
@@ -1607,7 +1673,7 @@ function toolEl(m) {
     }
     if (m.status === 'wait') {
       const ap = h('div', 'appr'), kind = m.kind;
-      ap.append(h('div', 'q', kind === 'run' ? '要執行這個指令嗎？' : '要套用這個修改嗎？'));
+      ap.append(h('div', 'q', m.name === 'godot_check' ? '要用 Godot 檢查專案嗎？（會執行專案裡的程式）' : m.name === 'godot_run' ? '要開啟遊戲視窗嗎？' : kind === 'run' ? '要執行這個指令嗎？' : '要套用這個修改嗎？'));
       const btn = (t, v, cls) => { const b = h('button', cls || '', t); b.onclick = () => { const f = approvals.get(m.id); if (f) { approvals.delete(m.id); f(v); } }; ap.append(b); };
       btn('允許', 'yes', 'yes'); btn(kind === 'run' ? '這個任務都允許執行指令' : '這個任務都允許修改', 'always'); btn('拒絕', 'deny');
       card.append(ap); card.open = true;
@@ -1637,7 +1703,7 @@ async function runTool(chat, fc, usageHolder) {
   }
   try {
     const r = await impl(chat, args);
-    m.status = 'ok'; m.out = r.out; refreshMsg(m);
+    m.status = r.status || 'ok'; m.out = r.out; refreshMsg(m);
     return r.model;
   } catch (e) {
     m.status = 'err'; m.out = e.message; refreshMsg(m);
@@ -1650,8 +1716,22 @@ async function agentContext(chat) {
   for (const f of ['GEMINI.md', 'AGENTS.md', 'CLAUDE.md']) {
     try { const j = await api('read', { root: chat.root, path: f, offset: 1, limit: 400 }); notes = '專案說明（' + f + '）：\n' + clip(j.content, 8000); break; } catch {}
   }
-  return { top, notes };
+  const godotProject = /(^|\n)project\.godot(\n|$)/i.test(top);
+  return { top, notes, godotProject };
 }
+const GODOT_SYS = ctx => [
+  'Godot 模式已開啟：這是 Godot 4 遊戲專案，程式語言只用 GDScript（不要用 C#）。',
+  S.godotExe ? 'Godot 執行檔已設定，用 godot_check 與 godot_run 工具操作 Godot，不要用 run_command 自己呼叫 Godot。' : '使用者還沒設定 Godot 執行檔：godot_check 與 godot_run 會失敗。需要時請使用者到「設定」→「Godot 執行檔」按「自動偵測」。',
+  ctx.godotProject ? '' : '工作資料夾裡還沒有 project.godot。使用者要建立新專案時，先寫 project.godot（config_version=5，[application] 區段設定 config/name 與 run/main_scene），再建立 scripts/、scenes/、assets/ 資料夾與主場景。',
+  'Godot 工作原則：',
+  '- 每次修改 .gd、.tscn、project.godot 之後都要執行 godot_check；ok 為 false 就依 errors 修正並重新檢查，全部通過才可以說完成。',
+  '- 想讓使用者實際玩玩看時用 godot_run，並告訴使用者怎麼操作。',
+  '- 腳本放 scripts/、場景放 scenes/、圖片音效放 assets/。',
+  '- .tscn 盡量少手改；新節點優先在 _ready() 裡用程式建立。一定要改 .tscn 時只改必要的幾行，不可重寫整個檔案，不可改動 uid:// 與 [ext_resource] 的 id。',
+  '- 不要修改或刪除 .godot/ 資料夾。一次只做一個小功能，通過檢查後再做下一個。',
+  '- 使用者是程式新手：每次修改後用繁體中文簡短說明改了什麼、為什麼這樣改。',
+  '- 遊戲內要呼叫 Gemini API 時，金鑰從環境變數 GEMINI_API_KEY 讀取（OS.get_environment），絕對不可以把金鑰寫進檔案。'
+].filter(Boolean).join('\n');
 const AGENT_SYS = (chat, ctx) => [
   '你是在使用者 Windows 電腦上工作的程式代理，作法類似 Claude Code：透過工具直接讀寫檔案、搜尋程式碼、執行指令來完成任務。',
   '工作資料夾：' + chat.root + '（路徑一律相對於它；無法存取資料夾以外的位置）',
@@ -1666,6 +1746,7 @@ const AGENT_SYS = (chat, ctx) => [
   '- 用繁體中文回覆，簡潔說明做了什麼與結果；不要在回覆裡重貼整份檔案。',
   S.noEmoji ? '- 回覆不要使用 emoji。' : '',
   S.system.trim() ? '使用者的背景資訊與偏好：\n' + S.system.trim() : '',
+  chat.godot ? GODOT_SYS(ctx) : '',
   ctx.notes,
   ctx.top ? '工作資料夾最上層的內容：\n' + ctx.top : ''
 ].filter(Boolean).join('\n');
@@ -1692,7 +1773,7 @@ async function runAgent(chat, u) {
     if (S.thoughts) tc.includeThoughts = true;
     if (to && tv && to.opts.some(([v]) => v === tv)) { if (to.kind === 'level') tc.thinkingLevel = tv; else tc.thinkingBudget = Number(tv); }
     if (Object.keys(tc).length) gc.thinkingConfig = tc;
-    const body = { contents: chat.agent, systemInstruction: { parts: [{ text: sys }] }, tools: [{ functionDeclarations: AGENT_TOOLS }] };
+    const body = { contents: chat.agent, systemInstruction: { parts: [{ text: sys }] }, tools: [{ functionDeclarations: chat.godot ? AGENT_TOOLS.concat(GODOT_TOOLS) : AGENT_TOOLS }] };
     if (Object.keys(gc).length) body.generationConfig = gc;
     let raw = [], paint = 0;
     const onChunk = j => {
@@ -1762,7 +1843,7 @@ async function submit() {
   if (!text && !pending.length) return;
   if (!activeKeys().length) { openSettings(); toast('請先填入 API 金鑰'); return; }
   if (isAgent() && !(cur ? cur.root : S.agentRoot)) { toast('請先選擇工作資料夾'); pickRoot(); return; }
-  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; if (studioNew) { cur.kind = 'game'; cur.gem = ''; studioNew = false; } if (agentNew) { cur.kind = 'agent'; cur.gem = ''; cur.root = S.agentRoot; cur.mode = S.agentMode; agentNew = false; } chats.push(cur); S.last = cur.id; saveS(); }
+  if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; if (studioNew) { cur.kind = 'game'; cur.gem = ''; studioNew = false; } if (agentNew) { cur.kind = 'agent'; cur.gem = ''; cur.root = S.agentRoot; cur.mode = S.agentMode; cur.godot = !!S.agentGodot; agentNew = false; } chats.push(cur); S.last = cur.id; saveS(); }
   if (editing) { const i = cur.messages.findIndex(m => m.id === editing); if (i >= 0) cur.messages.length = i; editing = null; $('#banner').hidden = true; }
   const u = { id: uid(), role: 'user', text, atts: pending };
   const m = { id: uid(), role: 'model', text: '' }; if (S.imgMode) m.img = true;
@@ -1948,6 +2029,7 @@ function openSettings() {
   $('#provider').value = S.provider; $('#vkey').value = S.vkey; $('#vproject').value = S.vproject; $('#vlocation').value = S.vlocation; showProvider();
   $('#key1').value = S.key1; $('#key2').value = S.key2; $('#customModel').value = S.customModel; $('#system').value = S.system; $('#noEmoji').checked = S.noEmoji; $('#lenient').checked = S.lenient; $('#diagrams').checked = S.diagrams;
   gemEditorFill();
+  $('#godotField').hidden = !LOCAL; $('#godotExe').value = S.godotExe || ''; $('#godotFound').innerHTML = '';
   $('#useTemp').checked = S.useTemp; $('#temp').value = S.temp; $('#temp').disabled = !S.useTemp; $('#tempVal').textContent = Number(S.temp).toFixed(1);
   $('#fx').value = S.fx; $('#thoughts').checked = S.thoughts; $('#enterSend').checked = S.enterSend; $('#theme').value = S.theme; $('#font').value = S.font || 'claude';
   $('#modal').hidden = false; closeDrawer(); fit(); $('.sheet .body').scrollTop = 0;
