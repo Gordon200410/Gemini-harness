@@ -944,7 +944,7 @@ function userEl(m) {
   }
   if (m.text) b.append(h('div', 'utext', m.text));
   const acts = h('div', 'acts');
-  [['copy', '複製']].concat(cur && cur.kind === 'agent' && typeof m.ai !== 'number' ? [] : [['edit', '編輯']]).forEach(([a, t]) => { const x = h('button', '', t); x.dataset.act = a; acts.append(x); });
+  [['copy', '複製']].concat(cur && cur.kind === 'agent' && typeof m.ai !== 'number' ? [] : [['edit', '編輯']], [['del', '刪除']]).forEach(([a, t]) => { const x = h('button', '', t); x.dataset.act = a; acts.append(x); });
   el.append(b, acts);
   return el;
 }
@@ -993,6 +993,7 @@ function modelEl(m) {
       nx.dataset.act = 'ver'; nx.dataset.d = 1; nx.disabled = i === n - 1 || !isLast; nx.setAttribute('aria-label', '下一個版本');
       v.append(pv, h('span', '', (i + 1) + ' / ' + n), nx); acts.append(v);
     }
+    if (!m.streaming) { const d = h('button', '', '刪除'); d.dataset.act = 'del'; acts.append(d); }
     const u = m.usage, bits = [];
     if (m.stage === 'builder' && final && lastHtml(m.text)) { const pl = h('button', '', '試玩'); pl.dataset.act = 'play'; acts.insertBefore(pl, acts.firstChild); }
     if (m.model) bits.push(m.model);
@@ -1875,6 +1876,29 @@ function showVersion(m, d) {
 }
 const VKEYS = ['text','thoughts','sources','usage','note','error','model','mid','at','thinkMs','images'];
 const snap = m => { const o = {}; VKEYS.forEach(k => { if (m[k] != null) o[k] = m[k]; }); return o; };
+async function delMsg(m) {
+  if (busy) return toast('請先停止目前的回覆');
+  const c = cur, msgs = c.messages, k = msgs.indexOf(m); if (k < 0) return;
+  if (c.kind === 'agent') {
+    // 程式代理：刪除整個回合（問題、工具紀錄與回覆），模型的對話紀錄也一起移除
+    let i = k; while (i >= 0 && msgs[i].role !== 'user') i--;
+    let j = k + 1; while (j < msgs.length && msgs[j].role !== 'user') j++;
+    if (i < 0) i = k;
+    if (!confirm('刪除這個回合（你的問題、代理的操作紀錄與回覆）？資料夾裡已改過的檔案不會復原。')) return;
+    const u = msgs[i];
+    if (u.role === 'user' && typeof u.ai === 'number' && c.agent) {
+      const nx = msgs.slice(j).find(x => x.role === 'user' && typeof x.ai === 'number');
+      const end = nx ? nx.ai : c.agent.length, n = end - u.ai;
+      c.agent.splice(u.ai, n);
+      msgs.slice(j).forEach(x => { if (x.role === 'user' && typeof x.ai === 'number') x.ai -= n; });
+    }
+    msgs.splice(i, j - i);
+  } else {
+    if (!confirm(m.role === 'user' ? '刪除這則問題？' : '刪除這則回覆？')) return;
+    msgs.splice(k, 1);
+  }
+  await persist(c); renderChat(); renderList(); showTotal();
+}
 async function regen() {
   if (busy || !cur) return;
   const last = cur.messages[cur.messages.length - 1]; if (!last || last.role !== 'model') return;
@@ -1935,6 +1959,7 @@ $('#msgs').addEventListener('click', e => {
   else if (act === 'regen') regen();
   else if (act === 'ver') showVersion(m, Number(b.dataset.d));
   else if (act === 'edit') startEdit(m);
+  else if (act === 'del') delMsg(m);
 });
 $('#cancelEdit').onclick = () => { editing = null; pending = []; $('#input').value = ''; $('#banner').hidden = true; renderAtts(); grow(); updateSend(); };
 
