@@ -5,6 +5,8 @@
 
 $ErrorActionPreference = 'Stop'
 $Here  = Split-Path -Parent $MyInvocation.MyCommand.Path
+# 拿掉「從網路下載」的標記，避免智慧型應用程式控制擋下 Start.bat 與捷徑
+try { Get-ChildItem -LiteralPath $Here -File | Unblock-File -ErrorAction SilentlyContinue } catch { }
 $Port  = 8765
 $Url   = "http://localhost:$Port/"
 $Token = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N')

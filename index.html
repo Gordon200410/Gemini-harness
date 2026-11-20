@@ -944,7 +944,7 @@ function userEl(m) {
   }
   if (m.text) b.append(h('div', 'utext', m.text));
   const acts = h('div', 'acts');
-  [['copy', '複製']].concat(cur && cur.kind === 'agent' ? [] : [['edit', '編輯']]).forEach(([a, t]) => { const x = h('button', '', t); x.dataset.act = a; acts.append(x); });
+  [['copy', '複製']].concat(cur && cur.kind === 'agent' && typeof m.ai !== 'number' ? [] : [['edit', '編輯']]).forEach(([a, t]) => { const x = h('button', '', t); x.dataset.act = a; acts.append(x); });
   el.append(b, acts);
   return el;
 }
@@ -984,7 +984,7 @@ function modelEl(m) {
     if (m.text) { const c = h('button', '', '複製'); c.dataset.act = 'copy'; acts.append(c); }
     if (m.text && window.speechSynthesis) { const v = h('button', '', speakId === m.id ? '停止朗讀' : '朗讀'); v.dataset.act = 'speak'; acts.append(v); }
     if (IMG_ENABLED && m.images && m.images.length) { const e = h('button', '', '修改這張圖'); e.dataset.act = 'editimg'; acts.append(e); }
-    const isLast = cur && cur.kind !== 'agent' && cur.messages[cur.messages.length - 1] === m;
+    const isLast = cur && cur.messages[cur.messages.length - 1] === m && (cur.kind !== 'agent' || cur.messages.some(x => x.role === 'user' && typeof x.ai === 'number'));
     if (isLast) { const r = h('button', '', m.error && !m.text ? '重試' : '重新產生'); r.dataset.act = 'regen'; acts.append(r); }
     if (m.alts && m.alts.length) {
       const n = m.alts.length + 1, i = m.ver == null ? n - 1 : m.ver, v = h('span', 'vers');
@@ -1759,6 +1759,7 @@ function partsOf(u) {
 async function runAgent(chat, u) {
   const keys = activeKeys();
   chat.agent = chat.agent || [];
+  u.ai = chat.agent.length;   // 編輯或重新產生時，模型對話紀錄要退回到這裡
   chat.agent.push({ role: 'user', parts: partsOf(u) });
   agentAbort = false;
   const ctx = await agentContext(chat);
@@ -1844,7 +1845,11 @@ async function submit() {
   if (!activeKeys().length) { openSettings(); toast('請先填入 API 金鑰'); return; }
   if (isAgent() && !(cur ? cur.root : S.agentRoot)) { toast('請先選擇工作資料夾'); pickRoot(); return; }
   if (!cur) { cur = { id: uid(), title: (text || pending[0].name).slice(0, 24), created: Date.now(), updated: Date.now(), messages: [], auto: true, gem: gemOf(S.gem) ? S.gem : '' }; if (studioNew) { cur.kind = 'game'; cur.gem = ''; studioNew = false; } if (agentNew) { cur.kind = 'agent'; cur.gem = ''; cur.root = S.agentRoot; cur.mode = S.agentMode; cur.godot = !!S.agentGodot; agentNew = false; } chats.push(cur); S.last = cur.id; saveS(); }
-  if (editing) { const i = cur.messages.findIndex(m => m.id === editing); if (i >= 0) cur.messages.length = i; editing = null; $('#banner').hidden = true; }
+  if (editing) {
+    const i = cur.messages.findIndex(m => m.id === editing);
+    if (i >= 0) { if (cur.kind === 'agent') { const ai = cur.messages[i].ai; if (typeof ai === 'number' && cur.agent) cur.agent.length = ai; toast('已退回到這則訊息重做（資料夾裡已改過的檔案不會復原）'); } cur.messages.length = i; }
+    editing = null; $('#banner').hidden = true;
+  }
   const u = { id: uid(), role: 'user', text, atts: pending };
   const m = { id: uid(), role: 'model', text: '' }; if (S.imgMode) m.img = true;
   cur.messages.push(u, m);
@@ -1873,6 +1878,13 @@ const snap = m => { const o = {}; VKEYS.forEach(k => { if (m[k] != null) o[k] = 
 async function regen() {
   if (busy || !cur) return;
   const last = cur.messages[cur.messages.length - 1]; if (!last || last.role !== 'model') return;
+  if (cur.kind === 'agent') {
+    let i = cur.messages.length - 1; while (i >= 0 && !(cur.messages[i].role === 'user' && typeof cur.messages[i].ai === 'number')) i--;
+    if (i < 0) return;
+    const u = cur.messages[i]; cur.agent.length = u.ai; cur.messages.length = i + 1;
+    toast('重新執行這個任務（資料夾裡已改過的檔案不會復原）');
+    renderChat(); return runAgent(cur, u);
+  }
   if (last.stage) {
     let i = cur.messages.length - 1; while (i >= 0 && cur.messages[i].role !== 'user') i--;
     if (i < 0) return;
